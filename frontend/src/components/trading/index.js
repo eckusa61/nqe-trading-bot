@@ -7,3 +7,4 @@ export { MetricCard, MetricsGrid } from './MetricCard';
 export { PortfolioChart } from './PortfolioChart';
 export { FeaturesGrid } from './FeaturesGrid';
 export { SystemHealth } from './SystemHealth';
+export { WebhookSettings } from './WebhookSettings';
