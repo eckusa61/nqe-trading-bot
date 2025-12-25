@@ -1,0 +1,161 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "E1_Fintech_Control_Room",
+      "archetype": "Swiss_High_Contrast_meets_Retro_Futurism",
+      "core_philosophy": "Information density without clutter. Every pixel must earn its rent.",
+      "emotional_tone": "Authoritative, Precise, High-Stakes, Instantaneous"
+    },
+    "typography": {
+      "font_family": {
+        "headings": "Chivo, sans-serif",
+        "body": "Inter, sans-serif",
+        "data": "JetBrains Mono, monospace"
+      },
+      "usage_rules": {
+        "headings": "Use 'Chivo' for page titles and major section headers. Weight: 700 or 900. Tracking: -0.02em.",
+        "body": "Use 'Inter' for labels, navigation, and general text. Weight: 400 or 500.",
+        "data": "CRITICAL: Use 'JetBrains Mono' for ALL financial data (prices, P&L, ratios). This ensures tabular alignment. Weight: 500."
+      },
+      "scale": {
+        "h1": "text-4xl md:text-5xl font-black tracking-tight",
+        "h2": "text-2xl md:text-3xl font-bold tracking-tight",
+        "h3": "text-xl font-semibold tracking-tight",
+        "data_large": "text-3xl font-mono font-medium tracking-tighter",
+        "data_regular": "text-sm font-mono",
+        "label": "text-xs font-medium text-muted-foreground uppercase tracking-wider"
+      }
+    },
+    "colors": {
+      "theme_mode": "dark",
+      "palette": {
+        "background": {
+          "default": "#09090b",
+          "card": "#121214",
+          "subtle": "#18181b"
+        },
+        "primary": {
+          "default": "#fafafa",
+          "foreground": "#09090b"
+        },
+        "semantic": {
+          "profit": "#10b981",
+          "loss": "#f43f5e",
+          "warning": "#f59e0b",
+          "info": "#3b82f6"
+        },
+        "border": {
+          "default": "#27272a",
+          "active": "#3f3f46"
+        }
+      },
+      "gradients": {
+        "profit_glow": "linear-gradient(180deg, rgba(16, 185, 129, 0) 0%, rgba(16, 185, 129, 0.1) 100%)",
+        "loss_glow": "linear-gradient(180deg, rgba(244, 63, 94, 0) 0%, rgba(244, 63, 94, 0.1) 100%)"
+      }
+    },
+    "grids": {
+      "dashboard_layout": "grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-4 p-4 md:p-6",
+      "bento_rules": {
+        "hero_metric": "col-span-full md:col-span-2 lg:col-span-3 row-span-1",
+        "main_chart": "col-span-full md:col-span-4 lg:col-span-9 row-span-2",
+        "feed_list": "col-span-full md:col-span-2 lg:col-span-3 row-span-2",
+        "control_panel": "col-span-full row-span-1 flex justify-between items-center bg-card border-t border-border p-4"
+      }
+    },
+    "components": {
+      "cards": {
+        "style": "bg-card border border-border rounded-none shadow-none",
+        "hover": "hover:border-primary/20 transition-colors duration-200"
+      },
+      "buttons": {
+        "primary": "bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm px-4 py-2 font-medium text-sm",
+        "destructive": "bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 rounded-sm",
+        "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-sm"
+      },
+      "inputs": {
+        "style": "bg-background border-input rounded-sm focus:ring-1 focus:ring-primary"
+      },
+      "tables": {
+        "header": "text-xs uppercase tracking-wider text-muted-foreground font-medium",
+        "row": "border-b border-border/50 hover:bg-muted/50 transition-colors",
+        "cell": "py-3 px-4 text-sm font-mono"
+      }
+    },
+    "visual_enhancers": {
+      "grid_borders": "Use 'border-r border-border/40' on grid items to create a technical, structured look.",
+      "scanlines": "Overlay a subtle repeating linear gradient (opacity 0.02) to simulate a monitor screen.",
+      "tracing_beam": "Use on the 'Active Strategy' card to indicate live execution.",
+      "glassmorphism": "Use only for sticky headers: bg-background/80 backdrop-blur-md border-b border-border/50."
+    },
+    "motion": {
+      "micro_interactions": "transition-all duration-200 ease-out",
+      "page_transition": "initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}",
+      "ticker": "Use a slow, continuous marquee for the stock ticker at the top."
+    },
+    "accessibility": {
+      "contrast": "Ensure all text meets APCA standards. Use 'text-foreground' on 'bg-background'.",
+      "focus_states": "Visible ring-2 ring-primary ring-offset-2 ring-offset-background on all interactive elements.",
+      "screen_readers": "Use aria-label on all icon-only buttons."
+    },
+    "media": {
+      "image_urls": [
+        {
+          "url": "https://images.unsplash.com/photo-1653824823360-6d735c19e2a5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwyfHx3YWxsJTIwc3RyZWV0JTIwdHJhZGluZyUyMGZsb29yJTIwZGFya3xlbnwwfHx8YmxhY2t8MTc2NjY4NTY1MXww&ixlib=rb-4.1.0&q=85",
+          "category": "background",
+          "description": "Wall Street Sign (B&W) - Use for Login/Landing background with heavy overlay."
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1647067517631-aa36cda58a17?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMGZpbmFuY2lhbCUyMGRhdGElMjB2aXN1YWxpemF0aW9uJTIwZGFya3xlbnwwfHx8YmxhY2t8MTc2NjY4NTY1Mnww&ixlib=rb-4.1.0&q=85",
+          "category": "texture",
+          "description": "Digital Numbers Matrix - Use as a subtle texture overlay in the 'System Health' section."
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGZpbmFuY2lhbCUyMGRhdGElMjB2aXN1YWxpemF0aW9uJTIwZGFya3xlbnwwfHx8YmxhY2t8MTc2NjY4NTY1Mnww&ixlib=rb-4.1.0&q=85",
+          "category": "hero",
+          "description": "Laptop with Analytics - Use for 'About' or 'Documentation' page hero."
+        }
+      ]
+    },
+    "libraries": {
+      "charts": "Recharts (ResponsiveContainer, AreaChart, BarChart, ComposedChart)",
+      "icons": "Lucide React",
+      "utils": "clsx, tailwind-merge"
+    },
+    "instructions_to_main_agent": {
+      "general": "You are building a high-performance trading dashboard. Speed and clarity are paramount. Do not use unnecessary animations that slow down the UI. Data must be legible at a glance.",
+      "layout_strategy": "Implement the 'Control Room' grid. Use dense spacing. Avoid large empty white spaces. This is a tool for professionals, not a marketing site.",
+      "component_overrides": "Customize Shadcn components to remove rounded corners (set radius to 0 or sm). Use 'border-border' for all borders. Ensure 'dark' mode is always active.",
+      "specific_components": [
+        {
+          "name": "KillSwitch",
+          "instruction": "Create a dedicated component for the 'Kill Switch'. It must be red, distinct, and require a confirmation dialog. It should be placed in the header or a persistent control bar."
+        },
+        {
+          "name": "PnLTicker",
+          "instruction": "Implement a scrolling ticker at the top of the dashboard showing live prices for SPY, QQQ, AAPL, MSFT, TSLA, NVDA, META."
+        },
+        {
+          "name": "RegimeIndicator",
+          "instruction": "Visual component showing current market regime (e.g., 'Bull Volatile', 'Bear Quiet'). Use color coding (Green/Red) and a gauge or simple badge."
+        }
+      ]
+    },
+    "universal_guidelines": [
+      "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+      "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+      "Create depth through layered design elements with z-index hierarchy.",
+      "Use glass-morphism effects with backdrop filters (12-24px blur) for sticky headers only.",
+      "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms.",
+      "You MUST NOT center align the app container.",
+      "Always use modern button styles like pill-shaped, or sharp button with interaction animations.",
+      "NEVER: use AI assistant Emoji characters like 🤖🧠 etc for icons.",
+      "Every interaction needs micro-animations - hover states, transitions.",
+      "Use 2-3x more spacing than feels comfortable in marketing sections, but keep dashboard sections DENSE.",
+      "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+      "Components MUST use named exports.",
+      "Pages MUST use default exports.",
+      "Use 'sonner' for toasts."
+    ]
+  }
+}
