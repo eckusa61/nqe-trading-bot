@@ -156,6 +156,9 @@ async def startup():
     # Initialize risk modules
     init_risk_modules()
     
+    # Initialize ensemble modules
+    init_ensemble_modules()
+    
     logger.info(f"Trading Bot initialized in {CONFIG.mode.value} mode")
     
     # Start background task to load data
