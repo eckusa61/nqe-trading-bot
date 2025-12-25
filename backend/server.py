@@ -74,6 +74,9 @@ class TradingState:
         self.data_manager: Optional[DataManager] = None
         self.feature_engine: Optional[FeatureEngine] = None
         self.backtest_engine: Optional[BacktestEngine] = None
+        self.guardian: Optional[GuardianAgent] = None
+        self.reconciliation: Optional[ReconciliationEngine] = None
+        self.pdt_enforcer: Optional[PDTEnforcer] = None
         self.start_time: datetime = datetime.now(timezone.utc)
         self.kill_switch_active: bool = False
         self.current_regime: MarketRegime = MarketRegime.SIDEWAYS
@@ -94,6 +97,14 @@ def init_strategies():
     strategy_registry.register(TrendFollowingStrategy())
     strategy_registry.register(StatisticalArbitrageStrategy())
     logger.info(f"Registered {len(strategy_registry.get_all())} strategies")
+
+# Initialize risk modules
+def init_risk_modules():
+    """Initialize Guardian, Reconciliation, PDT"""
+    state.guardian = GuardianAgent()
+    state.reconciliation = ReconciliationEngine()
+    state.pdt_enforcer = PDTEnforcer()
+    logger.info("Risk modules initialized: Guardian, Reconciliation, PDT")
 
 
 # ===== Startup/Shutdown Events =====
