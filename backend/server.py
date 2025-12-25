@@ -1525,6 +1525,165 @@ async def update_strategy_weights(
     }
 
 
+# ===== Telegram Endpoints =====
+
+@api_router.get("/telegram/status", response_model=dict)
+async def get_telegram_status():
+    """Get Telegram integration status"""
+    return telegram_manager.get_status()
+
+
+@api_router.post("/telegram/test", response_model=dict)
+async def test_telegram_channels():
+    """Test all Telegram channels"""
+    results = await telegram_manager.test_all_channels()
+    return {
+        "status": "tested",
+        "results": results
+    }
+
+
+@api_router.post("/telegram/send-signal", response_model=dict)
+async def send_telegram_signal(
+    symbol: str,
+    action: str,
+    price: float,
+    target: Optional[float] = None,
+    stop_loss: Optional[float] = None,
+    confidence: float = 0.8,
+    reason: str = ""
+):
+    """Send trading signal to Telegram"""
+    await telegram_manager.send_signal(
+        symbol=symbol.upper(),
+        action=action.upper(),
+        price=price,
+        target=target,
+        stop_loss=stop_loss,
+        confidence=confidence,
+        reason=reason
+    )
+    return {"status": "sent", "channel": "sinyal"}
+
+
+@api_router.post("/telegram/send-news", response_model=dict)
+async def send_telegram_news(
+    title: str,
+    source: str,
+    summary: str,
+    sentiment: str = "neutral"
+):
+    """Send news to Telegram"""
+    await telegram_manager.send_news(title, source, summary, sentiment)
+    return {"status": "sent", "channel": "haber"}
+
+
+# ===== AI Supervisor Endpoints =====
+
+@api_router.get("/ai/supervisor/status", response_model=dict)
+async def get_ai_supervisor_status():
+    """Get AI Supervisor status"""
+    return ai_supervisor.get_status()
+
+
+@api_router.post("/ai/supervisor/start", response_model=dict)
+async def start_ai_supervisor(background_tasks: BackgroundTasks):
+    """Start the AI Supervisor background task"""
+    if ai_supervisor.is_running:
+        return {"status": "already_running"}
+    
+    background_tasks.add_task(ai_supervisor.start)
+    return {"status": "starting"}
+
+
+@api_router.post("/ai/supervisor/stop", response_model=dict)
+async def stop_ai_supervisor():
+    """Stop the AI Supervisor"""
+    await ai_supervisor.stop()
+    return {"status": "stopped"}
+
+
+@api_router.post("/ai/analyze-market", response_model=dict)
+async def ai_analyze_market():
+    """Get AI market analysis"""
+    from trading_bot.ai.llm_client import LLMClient
+    
+    llm = LLMClient()
+    
+    # Collect current state
+    market_data = {
+        "regime": state.regime_detector.current_state.value if state.regime_detector else "unknown",
+        "features": {k: v.to_dict() for k, v in list(state.cached_features.items())[:3]}
+    }
+    
+    positions = []
+    if state.connector:
+        pos = await state.connector.get_positions()
+        positions = [{"symbol": k, "qty": v} for k, v in pos.items() if v != 0]
+    
+    performance = {
+        "daily_pnl": ai_supervisor.daily_pnl,
+        "consecutive_losses": ai_supervisor.consecutive_losses
+    }
+    
+    analysis = await llm.analyze_market(
+        market_data=market_data,
+        regime=market_data["regime"],
+        positions=positions,
+        performance=performance
+    )
+    
+    return analysis
+
+
+# ===== Social Sentiment Endpoints =====
+
+@api_router.get("/social/status", response_model=dict)
+async def get_social_status():
+    """Get social sentiment analyzer status"""
+    return social_analyzer.get_status()
+
+
+@api_router.get("/social/sentiment/{symbol}", response_model=dict)
+async def get_symbol_sentiment(symbol: str):
+    """Get sentiment for a specific symbol"""
+    sentiment = social_analyzer.get_sentiment(symbol.upper())
+    if sentiment:
+        return sentiment.to_dict()
+    
+    # Try to analyze on-demand
+    sentiment = await social_analyzer.analyze_symbol(symbol.upper())
+    if sentiment:
+        return sentiment.to_dict()
+    
+    return {"symbol": symbol, "sentiment": "no_data"}
+
+
+@api_router.get("/social/sentiment", response_model=dict)
+async def get_all_sentiments():
+    """Get all cached sentiments"""
+    return {
+        "sentiments": social_analyzer.get_all_sentiments(),
+        "count": len(social_analyzer.sentiment_cache)
+    }
+
+
+@api_router.get("/social/signal/{symbol}", response_model=dict)
+async def get_sentiment_signal(symbol: str):
+    """Get sentiment-based trading signal"""
+    return social_analyzer.get_sentiment_signal(symbol.upper())
+
+
+@api_router.post("/social/start", response_model=dict)
+async def start_social_analyzer(background_tasks: BackgroundTasks):
+    """Start social sentiment monitoring"""
+    if social_analyzer.is_running:
+        return {"status": "already_running"}
+    
+    background_tasks.add_task(social_analyzer.start)
+    return {"status": "starting"}
+
+
 # Include router
 app.include_router(api_router)
 
