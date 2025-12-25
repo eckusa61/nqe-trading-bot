@@ -172,11 +172,18 @@ async def get_system_status():
 
 
 @api_router.post("/kill-switch", response_model=dict)
-async def toggle_kill_switch(action: KillSwitchAction):
+async def toggle_kill_switch(action: KillSwitchAction, background_tasks: BackgroundTasks):
     """Activate or deactivate kill switch"""
     if action.action == "activate":
         state.kill_switch_active = True
         logger.warning(f"KILL SWITCH ACTIVATED: {action.reason}")
+        
+        # Send critical alert
+        background_tasks.add_task(
+            alert_manager.alert_drawdown_critical,
+            current_drawdown=15.0,
+            threshold=15.0
+        )
         
         # Close all positions (simulated)
         if state.connector:
