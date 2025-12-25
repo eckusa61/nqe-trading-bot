@@ -50,3 +50,7 @@ frontend/node_modules/.cache/default-development/3.pack
 # Environment files
 *.env
 *.env.*
+YOUR_API_KEYS.txt
+*.backup
+.env.backup
+.env.local
