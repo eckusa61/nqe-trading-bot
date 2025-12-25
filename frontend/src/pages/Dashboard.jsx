@@ -12,7 +12,8 @@ import {
   PortfolioChart,
   FeaturesGrid,
   SystemHealth,
-  WebhookSettings
+  WebhookSettings,
+  MarketStatus
 } from '../components/trading';
 import axios from 'axios';
 
