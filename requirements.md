@@ -108,14 +108,16 @@ TARGET_VOLATILITY = 15%
 
 ## Next Phases (Not Yet Implemented)
 
-### Phase 2: Strategies & Backtesting
-- [ ] Momentum Strategy (20/50 MA crossover)
-- [ ] Mean Reversion Strategy (RSI-based)
-- [ ] Volatility Breakout Strategy (ATR-based)
-- [ ] Trend Following Strategy (ADX + DM)
-- [ ] Statistical Arbitrage (SPY/QQQ pairs)
-- [ ] Realistic backtesting engine with costs
-- [ ] Walk-forward optimization
+### Phase 2: Strategies & Backtesting - COMPLETED ✅
+- [x] Momentum Strategy (20/50 MA crossover)
+- [x] Mean Reversion Strategy (RSI-based: < 30 buy, > 70 sell)
+- [x] Volatility Breakout Strategy (ATR + Bollinger Band breakouts)
+- [x] Trend Following Strategy (ADX + Directional Movement)
+- [x] Statistical Arbitrage (SPY/QQQ relative value)
+- [x] Realistic backtesting engine with transaction costs
+- [x] Walk-forward optimization support
+- [x] Performance metrics (Sharpe, Sortino, Calmar, Max DD, Win Rate, Profit Factor, Alpha, Beta)
+- [x] Frontend backtest page with strategy selection and results visualization
 
 ### Webhook Alerts - COMPLETED ✅
 - [x] Slack webhook integration
