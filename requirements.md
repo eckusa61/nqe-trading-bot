@@ -117,6 +117,18 @@ TARGET_VOLATILITY = 15%
 - [ ] Realistic backtesting engine with costs
 - [ ] Walk-forward optimization
 
+### Webhook Alerts - COMPLETED ✅
+- [x] Slack webhook integration
+- [x] Discord webhook integration
+- [x] Drawdown warning (>10%)
+- [x] Critical drawdown / Kill switch (>15%)
+- [x] Connection lost alert
+- [x] Data anomaly alert
+- [x] Strategy failure alert
+- [x] Rate limiting (10 alerts/min)
+- [x] Alert history tracking
+- [x] Frontend configuration UI
+
 ### Phase 3: Advanced Features
 - [ ] Hidden Markov Model regime detection
 - [ ] Multi-strategy ensemble with dynamic weights
