@@ -373,6 +373,11 @@ class TradingBotAPITester:
             self.test_orders()
             self.test_trades()
             self.test_kill_switch()
+            
+            # Test webhook and alert functionality
+            self.test_webhook_config()
+            self.test_alert_history()
+            self.test_alert_endpoints()
         else:
             print("⚠️  System not connected - skipping dependent tests")
         
