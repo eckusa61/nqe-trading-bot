@@ -266,6 +266,94 @@ class TradingBotAPITester:
         else:
             self.log_test("Kill Switch - Activate", False, result)
 
+    def test_webhook_config(self):
+        """Test webhook configuration endpoints"""
+        # Test GET webhook config
+        success, result = self.test_api_endpoint('GET', 'webhooks')
+        
+        if success:
+            required_fields = ['slack_configured', 'discord_configured', 'enabled', 'rate_limit', 'enabled_alerts']
+            missing_fields = [field for field in required_fields if field not in result]
+            
+            if missing_fields:
+                self.log_test("Webhook Config - GET", False, f"Missing fields: {missing_fields}")
+            else:
+                self.log_test("Webhook Config - GET", True, f"Slack: {result.get('slack_configured')}, Discord: {result.get('discord_configured')}")
+                
+                # Test POST webhook config
+                config_data = {
+                    "slack_url": "https://hooks.slack.com/services/test/test/test",
+                    "discord_url": "https://discord.com/api/webhooks/test/test",
+                    "enabled": True
+                }
+                
+                success2, result2 = self.test_api_endpoint('POST', 'webhooks', 200, config_data)
+                
+                if success2:
+                    if result2.get('slack_configured') and result2.get('discord_configured'):
+                        self.log_test("Webhook Config - POST", True, "Successfully configured webhooks")
+                    else:
+                        self.log_test("Webhook Config - POST", False, f"Configuration not saved properly: {result2}")
+                else:
+                    self.log_test("Webhook Config - POST", False, result2)
+        else:
+            self.log_test("Webhook Config - GET", False, result)
+
+    def test_alert_history(self):
+        """Test alert history endpoint"""
+        success, result = self.test_api_endpoint('GET', 'alerts')
+        
+        if success:
+            required_fields = ['alerts', 'total']
+            missing_fields = [field for field in required_fields if field not in result]
+            
+            if missing_fields:
+                self.log_test("Alert History", False, f"Missing fields: {missing_fields}")
+            else:
+                alerts_count = len(result.get('alerts', []))
+                total_count = result.get('total', 0)
+                self.log_test("Alert History", True, f"Retrieved {alerts_count} alerts (total: {total_count})")
+        else:
+            self.log_test("Alert History", False, result)
+
+    def test_alert_endpoints(self):
+        """Test alert trigger endpoints"""
+        # Test test alert (should fail gracefully when no webhooks configured)
+        test_alert_data = {"alert_type": "test"}
+        success, result = self.test_api_endpoint('POST', 'alerts/test', 400, test_alert_data)
+        
+        if success:
+            self.log_test("Test Alert - No Webhooks", True, "Correctly failed when no webhooks configured")
+        else:
+            # If it doesn't fail with 400, check if it's because webhooks are configured
+            success2, result2 = self.test_api_endpoint('POST', 'alerts/test', 200, test_alert_data)
+            if success2:
+                self.log_test("Test Alert - With Webhooks", True, "Test alert sent successfully")
+            else:
+                self.log_test("Test Alert", False, f"Unexpected response: {result}")
+
+        # Test drawdown warning alert
+        success, result = self.test_api_endpoint('POST', 'alerts/drawdown-warning', 200, None)
+        
+        if success:
+            if result.get('status') == 'sent':
+                self.log_test("Drawdown Warning Alert", True, f"Drawdown: {result.get('drawdown')}%")
+            else:
+                self.log_test("Drawdown Warning Alert", False, f"Unexpected response: {result}")
+        else:
+            self.log_test("Drawdown Warning Alert", False, result)
+
+        # Test connection lost alert
+        success, result = self.test_api_endpoint('POST', 'alerts/connection-lost', 200, None)
+        
+        if success:
+            if result.get('status') == 'sent':
+                self.log_test("Connection Lost Alert", True, f"Alert: {result.get('alert')}")
+            else:
+                self.log_test("Connection Lost Alert", False, f"Unexpected response: {result}")
+        else:
+            self.log_test("Connection Lost Alert", False, result)
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Trading Bot Backend API Tests")
