@@ -514,6 +514,13 @@ class TradingBotAPITester:
             self.test_webhook_config()
             self.test_alert_history()
             self.test_alert_endpoints()
+            
+            # Phase 2: Test strategies and backtesting
+            print("\n🎯 Phase 2: Testing Strategies & Backtesting")
+            self.test_strategies()
+            self.test_strategy_signals()
+            self.test_strategy_toggle()
+            self.test_backtest()
         else:
             print("⚠️  System not connected - skipping dependent tests")
         
