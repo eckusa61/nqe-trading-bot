@@ -354,6 +354,142 @@ class TradingBotAPITester:
         else:
             self.log_test("Connection Lost Alert", False, result)
 
+    def test_strategies(self):
+        """Test strategies endpoints - Phase 2"""
+        # Test GET /api/strategies - should return 5 strategies
+        success, result = self.test_api_endpoint('GET', 'strategies')
+        
+        if success:
+            if isinstance(result, list) and len(result) == 5:
+                strategy_names = [s.get('name') for s in result]
+                expected_strategies = ['Momentum', 'MeanReversion', 'VolatilityBreakout', 'TrendFollowing', 'StatisticalArbitrage']
+                
+                if all(name in strategy_names for name in expected_strategies):
+                    self.log_test("Strategies - List All", True, f"Got {len(result)} strategies: {strategy_names}")
+                    
+                    # Test individual strategy details
+                    test_strategy = 'Momentum'
+                    success2, result2 = self.test_api_endpoint('GET', f'strategies/{test_strategy}')
+                    
+                    if success2:
+                        required_fields = ['name', 'description', 'enabled', 'parameters']
+                        missing_fields = [field for field in required_fields if field not in result2]
+                        
+                        if missing_fields:
+                            self.log_test("Strategies - Get Single", False, f"Missing fields: {missing_fields}")
+                        else:
+                            self.log_test("Strategies - Get Single", True, f"{test_strategy}: enabled={result2.get('enabled')}")
+                    else:
+                        self.log_test("Strategies - Get Single", False, result2)
+                else:
+                    self.log_test("Strategies - List All", False, f"Missing strategies. Got: {strategy_names}")
+            else:
+                self.log_test("Strategies - List All", False, f"Expected 5 strategies, got: {len(result) if isinstance(result, list) else 'not a list'}")
+        else:
+            self.log_test("Strategies - List All", False, result)
+
+    def test_strategy_signals(self):
+        """Test strategy signal generation"""
+        # Test signals for specific strategy
+        test_strategy = 'Momentum'
+        success, result = self.test_api_endpoint('GET', f'strategies/{test_strategy}/signals', timeout=15)
+        
+        if success:
+            if isinstance(result, list):
+                if len(result) == 7:  # Should have signals for all 7 symbols
+                    symbols = [s.get('symbol') for s in result]
+                    expected_symbols = ['SPY', 'QQQ', 'AAPL', 'MSFT', 'TSLA', 'NVDA', 'META']
+                    
+                    if all(symbol in symbols for symbol in expected_symbols):
+                        self.log_test("Strategy Signals - Momentum", True, f"Generated signals for {len(result)} symbols")
+                    else:
+                        self.log_test("Strategy Signals - Momentum", False, f"Missing symbols. Got: {symbols}")
+                else:
+                    self.log_test("Strategy Signals - Momentum", False, f"Expected 7 signals, got: {len(result)}")
+            else:
+                self.log_test("Strategy Signals - Momentum", False, "Expected list of signals")
+        else:
+            self.log_test("Strategy Signals - Momentum", False, result)
+
+        # Test all signals endpoint
+        success, result = self.test_api_endpoint('GET', 'signals', timeout=15)
+        
+        if success:
+            if isinstance(result, list):
+                self.log_test("All Signals", True, f"Generated {len(result)} signals from enabled strategies")
+            else:
+                self.log_test("All Signals", False, "Expected list of signals")
+        else:
+            self.log_test("All Signals", False, result)
+
+    def test_strategy_toggle(self):
+        """Test strategy enable/disable toggle"""
+        test_strategy = 'Momentum'
+        
+        # Get current state
+        success, result = self.test_api_endpoint('GET', f'strategies/{test_strategy}')
+        
+        if success:
+            original_enabled = result.get('enabled')
+            
+            # Toggle strategy
+            success2, result2 = self.test_api_endpoint('POST', f'strategies/{test_strategy}/toggle')
+            
+            if success2:
+                new_enabled = result2.get('enabled')
+                if new_enabled != original_enabled:
+                    self.log_test("Strategy Toggle", True, f"{test_strategy}: {original_enabled} -> {new_enabled}")
+                    
+                    # Toggle back to original state
+                    self.test_api_endpoint('POST', f'strategies/{test_strategy}/toggle')
+                else:
+                    self.log_test("Strategy Toggle", False, f"State didn't change: {original_enabled} -> {new_enabled}")
+            else:
+                self.log_test("Strategy Toggle", False, result2)
+        else:
+            self.log_test("Strategy Toggle", False, result)
+
+    def test_backtest(self):
+        """Test backtesting engine"""
+        backtest_data = {
+            "symbols": ["SPY", "QQQ", "AAPL"],
+            "start_date": "",
+            "end_date": "",
+            "initial_capital": 100000,
+            "strategies": ["Momentum"],
+            "leverage": 1.0
+        }
+        
+        success, result = self.test_api_endpoint('POST', 'backtest', 200, backtest_data, timeout=30)
+        
+        if success:
+            if result.get('status') == 'completed' and 'results' in result:
+                results = result.get('results', [])
+                if len(results) > 0:
+                    backtest_result = results[0]
+                    required_fields = ['strategy_name', 'initial_capital', 'final_capital', 'metrics']
+                    missing_fields = [field for field in required_fields if field not in backtest_result]
+                    
+                    if missing_fields:
+                        self.log_test("Backtest Engine", False, f"Missing fields: {missing_fields}")
+                    else:
+                        metrics = backtest_result.get('metrics', {})
+                        required_metrics = ['total_return', 'sharpe_ratio', 'max_drawdown', 'win_rate']
+                        missing_metrics = [field for field in required_metrics if field not in metrics]
+                        
+                        if missing_metrics:
+                            self.log_test("Backtest Engine", False, f"Missing metrics: {missing_metrics}")
+                        else:
+                            total_return = metrics.get('total_return', 0)
+                            sharpe_ratio = metrics.get('sharpe_ratio', 0)
+                            self.log_test("Backtest Engine", True, f"Return: {total_return}%, Sharpe: {sharpe_ratio}")
+                else:
+                    self.log_test("Backtest Engine", False, "No backtest results returned")
+            else:
+                self.log_test("Backtest Engine", False, f"Unexpected response format: {result}")
+        else:
+            self.log_test("Backtest Engine", False, result)
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Trading Bot Backend API Tests")
