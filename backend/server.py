@@ -1698,6 +1698,281 @@ async def start_social_analyzer(background_tasks: BackgroundTasks):
     return {"status": "starting"}
 
 
+# ===== Data Feeds Endpoints =====
+
+@api_router.get("/feeds/status", response_model=dict)
+async def get_all_feeds_status():
+    """Get status of all data feeds"""
+    return {
+        "reddit": reddit_feed.get_status(),
+        "stocktwits": stocktwits_feed.get_status(),
+        "yahoo": yahoo_feed.get_status(),
+        "crypto": crypto_feed.get_status(),
+        "news": news_feed.get_status(),
+        "finviz": finviz_feed.get_status(),
+        "forex": forex_feed.get_status(),
+        "twitter": twitter_feed.get_status()
+    }
+
+
+# Reddit Endpoints
+@api_router.get("/feeds/reddit/trending", response_model=dict)
+async def get_reddit_trending():
+    """Get trending tickers from Reddit"""
+    trending = await reddit_feed.get_trending_tickers()
+    posts = await reddit_feed.get_all_finance_posts(limit_per_sub=5)
+    return {
+        "trending_tickers": trending,
+        "top_posts": [
+            {
+                "title": p.title,
+                "subreddit": p.subreddit,
+                "score": p.score,
+                "symbols": p.symbols_mentioned
+            }
+            for p in posts[:20]
+        ]
+    }
+
+
+@api_router.get("/feeds/reddit/{symbol}", response_model=dict)
+async def get_reddit_symbol_mentions(symbol: str):
+    """Get Reddit mentions for a symbol"""
+    posts = await reddit_feed.get_symbol_mentions(symbol.upper())
+    return {
+        "symbol": symbol.upper(),
+        "mention_count": len(posts),
+        "posts": [
+            {
+                "title": p.title,
+                "subreddit": p.subreddit,
+                "score": p.score,
+                "comments": p.num_comments
+            }
+            for p in posts[:10]
+        ]
+    }
+
+
+# StockTwits Endpoints
+@api_router.get("/feeds/stocktwits/trending", response_model=dict)
+async def get_stocktwits_trending():
+    """Get trending symbols on StockTwits"""
+    trending = await stocktwits_feed.get_trending()
+    return {"trending": trending}
+
+
+@api_router.get("/feeds/stocktwits/{symbol}", response_model=dict)
+async def get_stocktwits_sentiment(symbol: str):
+    """Get StockTwits sentiment for a symbol"""
+    return await stocktwits_feed.get_sentiment_score(symbol.upper())
+
+
+# Yahoo Finance Endpoints
+@api_router.get("/feeds/yahoo/market", response_model=dict)
+async def get_yahoo_market_summary():
+    """Get market summary from Yahoo Finance"""
+    return yahoo_feed.get_market_summary()
+
+
+@api_router.get("/feeds/yahoo/{symbol}", response_model=dict)
+async def get_yahoo_quote(symbol: str):
+    """Get Yahoo Finance quote and news"""
+    quote = yahoo_feed.get_quote(symbol.upper())
+    news = yahoo_feed.get_news(symbol.upper(), limit=5)
+    
+    return {
+        "quote": {
+            "symbol": quote.symbol,
+            "price": quote.price,
+            "change": quote.change,
+            "change_percent": quote.change_percent,
+            "volume": quote.volume,
+            "market_cap": quote.market_cap,
+            "pe_ratio": quote.pe_ratio,
+            "52w_high": quote.fifty_two_week_high,
+            "52w_low": quote.fifty_two_week_low
+        } if quote else None,
+        "news": [
+            {
+                "title": n.title,
+                "publisher": n.publisher,
+                "link": n.link
+            }
+            for n in news
+        ]
+    }
+
+
+# Crypto Endpoints
+@api_router.get("/feeds/crypto/top", response_model=dict)
+async def get_top_cryptos():
+    """Get top cryptocurrencies"""
+    cryptos = await crypto_feed.get_top_cryptos(limit=20)
+    fear_greed = await crypto_feed.get_fear_greed_index()
+    
+    return {
+        "fear_greed_index": fear_greed,
+        "top_cryptos": [
+            {
+                "symbol": c.symbol,
+                "name": c.name,
+                "price": c.price_usd,
+                "change_24h": c.change_24h,
+                "market_cap": c.market_cap,
+                "rank": c.rank
+            }
+            for c in cryptos
+        ]
+    }
+
+
+@api_router.get("/feeds/crypto/{symbol}", response_model=dict)
+async def get_crypto_price(symbol: str):
+    """Get crypto price"""
+    quote = await crypto_feed.get_price(symbol.upper())
+    if quote:
+        return {
+            "symbol": quote.symbol,
+            "name": quote.name,
+            "price": quote.price_usd,
+            "change_24h": quote.change_24h,
+            "change_7d": quote.change_7d,
+            "volume_24h": quote.volume_24h,
+            "market_cap": quote.market_cap
+        }
+    return {"symbol": symbol, "error": "Not found"}
+
+
+# Forex Endpoints
+@api_router.get("/feeds/forex/summary", response_model=dict)
+async def get_forex_summary():
+    """Get forex market summary"""
+    return await forex_feed.get_market_summary()
+
+
+@api_router.get("/feeds/forex/{base}/{quote}", response_model=dict)
+async def get_forex_rate(base: str, quote: str):
+    """Get forex exchange rate"""
+    rate = await forex_feed.get_rate(base.upper(), quote.upper())
+    return {
+        "pair": f"{base.upper()}/{quote.upper()}",
+        "rate": rate
+    }
+
+
+# Finviz Endpoints
+@api_router.get("/feeds/finviz/gainers", response_model=dict)
+async def get_finviz_gainers():
+    """Get top gainers from Finviz"""
+    gainers = await finviz_feed.get_top_gainers()
+    return {"gainers": gainers}
+
+
+@api_router.get("/feeds/finviz/losers", response_model=dict)
+async def get_finviz_losers():
+    """Get top losers from Finviz"""
+    losers = await finviz_feed.get_top_losers()
+    return {"losers": losers}
+
+
+@api_router.get("/feeds/finviz/oversold", response_model=dict)
+async def get_finviz_oversold():
+    """Get oversold stocks (potential buys)"""
+    oversold = await finviz_feed.get_oversold()
+    return {"oversold": oversold}
+
+
+@api_router.get("/feeds/finviz/overbought", response_model=dict)
+async def get_finviz_overbought():
+    """Get overbought stocks (potential sells)"""
+    overbought = await finviz_feed.get_overbought()
+    return {"overbought": overbought}
+
+
+@api_router.get("/feeds/finviz/unusual-volume", response_model=dict)
+async def get_finviz_unusual_volume():
+    """Get stocks with unusual volume"""
+    unusual = await finviz_feed.get_unusual_volume()
+    return {"unusual_volume": unusual}
+
+
+@api_router.get("/feeds/finviz/{symbol}/news", response_model=dict)
+async def get_finviz_news(symbol: str):
+    """Get news for a symbol from Finviz"""
+    news = await finviz_feed.get_stock_news(symbol.upper())
+    return {
+        "symbol": symbol.upper(),
+        "news": [
+            {"title": n.title, "link": n.link, "source": n.source, "time": n.time}
+            for n in news
+        ]
+    }
+
+
+# Twitter Endpoints
+@api_router.get("/feeds/twitter/trading", response_model=dict)
+async def get_twitter_trading_feed():
+    """Get tweets from tracked trading accounts"""
+    tweets = await twitter_feed.get_trading_feed()
+    return {
+        "tracked_accounts": twitter_feed.TRADING_ACCOUNTS,
+        "tweets": [
+            {
+                "text": t.text,
+                "author": t.author,
+                "likes": t.likes,
+                "retweets": t.retweets,
+                "symbols": t.symbols_mentioned
+            }
+            for t in tweets[:20]
+        ]
+    }
+
+
+@api_router.get("/feeds/twitter/{symbol}", response_model=dict)
+async def get_twitter_symbol_sentiment(symbol: str):
+    """Get Twitter sentiment for a symbol"""
+    return await twitter_feed.get_symbol_sentiment(symbol.upper())
+
+
+# News Endpoints  
+@api_router.get("/feeds/news/market", response_model=dict)
+async def get_market_news():
+    """Get general market news"""
+    articles = await news_feed.get_market_news(limit=20)
+    return {
+        "articles": [
+            {
+                "title": a.title,
+                "source": a.source,
+                "url": a.url,
+                "published": a.published.isoformat(),
+                "sentiment": a.sentiment
+            }
+            for a in articles
+        ]
+    }
+
+
+@api_router.get("/feeds/news/{symbol}", response_model=dict)
+async def get_symbol_news(symbol: str):
+    """Get news for a specific symbol"""
+    articles = await news_feed.get_symbol_news(symbol.upper())
+    return {
+        "symbol": symbol.upper(),
+        "articles": [
+            {
+                "title": a.title,
+                "source": a.source,
+                "url": a.url,
+                "sentiment": a.sentiment
+            }
+            for a in articles
+        ]
+    }
+
+
 # Include router
 app.include_router(api_router)
 
