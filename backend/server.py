@@ -1347,8 +1347,6 @@ async def get_current_regime():
     
     if features_list:
         regime_state = state.regime_detector.detect_from_features(features_list)
-        # Update global state
-        state.current_regime = MarketRegime(regime_state.current_regime.value)
         return regime_state.to_dict()
     
     # Return current state without update
