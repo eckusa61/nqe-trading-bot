@@ -1038,6 +1038,259 @@ async def trigger_connection_lost():
     return {"status": "sent", "alert": "connection_lost"}
 
 
+# ===== Time Sync Manager Endpoints =====
+
+@api_router.get("/market/status", response_model=dict)
+async def get_market_status():
+    """
+    Get current market status including:
+    - Is market open/closed
+    - Current session (pre-market, regular, after-hours)
+    - Time to open/close
+    - Holiday information
+    """
+    status = time_sync_manager.get_market_status()
+    return status.to_dict()
+
+
+@api_router.get("/market/can-trade", response_model=dict)
+async def check_can_trade(allow_extended_hours: bool = False):
+    """
+    Check if trading is allowed at current time
+    
+    Args:
+        allow_extended_hours: Allow trading during pre-market/after-hours
+    """
+    validation = time_sync_manager.validate_order_time(allow_extended_hours)
+    return {
+        "allowed": validation.allowed,
+        "reason": validation.reason,
+        "session": validation.session.value,
+        "suggested_action": validation.suggested_action,
+        "minutes_until_allowed": validation.minutes_until_allowed
+    }
+
+
+@api_router.get("/market/calendar", response_model=dict)
+async def get_trading_calendar(days_ahead: int = 30):
+    """
+    Get trading calendar for upcoming days
+    
+    Args:
+        days_ahead: Number of days to look ahead (max 90)
+    """
+    days = min(days_ahead, 90)
+    return time_sync_manager.get_trading_calendar(days)
+
+
+@api_router.post("/market/sync-broker-time", response_model=dict)
+async def sync_broker_time():
+    """
+    Synchronize time with broker and detect drift
+    Uses current broker connection time
+    """
+    if not state.connector or not state.connector.is_connected:
+        raise HTTPException(status_code=503, detail="Not connected to broker")
+    
+    # Get broker time (for simulation, use system time)
+    broker_time = datetime.now(timezone.utc)
+    
+    result = time_sync_manager.sync_with_broker(broker_time)
+    return result
+
+
+@api_router.get("/market/time-sync-status", response_model=dict)
+async def get_time_sync_status():
+    """Get comprehensive time sync manager status"""
+    return time_sync_manager.get_status()
+
+
+# ===== Corporate Actions Endpoints =====
+
+@api_router.get("/corporate-actions/status", response_model=dict)
+async def get_corporate_actions_status():
+    """Get corporate actions handler status"""
+    return corporate_actions_handler.get_status()
+
+
+@api_router.get("/corporate-actions/pending", response_model=dict)
+async def get_pending_corporate_actions(symbol: Optional[str] = None):
+    """
+    Get pending corporate actions
+    
+    Args:
+        symbol: Optional symbol filter
+    """
+    actions = corporate_actions_handler.get_pending_actions(symbol)
+    return {
+        "count": len(actions),
+        "actions": [a.to_dict() for a in actions]
+    }
+
+
+@api_router.post("/corporate-actions/split", response_model=dict)
+async def add_stock_split(
+    symbol: str,
+    ratio_to: int,
+    ratio_from: int,
+    ex_date: str
+):
+    """
+    Add a stock split corporate action
+    
+    Example: For a 2:1 split, ratio_to=2, ratio_from=1
+    Example: For a 1:5 reverse split, ratio_to=1, ratio_from=5
+    
+    Args:
+        symbol: Stock symbol
+        ratio_to: New share count
+        ratio_from: Old share count
+        ex_date: Ex-date in ISO format (YYYY-MM-DD)
+    """
+    try:
+        ex_datetime = datetime.fromisoformat(ex_date).replace(tzinfo=timezone.utc)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    action = corporate_actions_handler.create_split_action(
+        symbol=symbol.upper(),
+        ratio_to=ratio_to,
+        ratio_from=ratio_from,
+        ex_date=ex_datetime
+    )
+    
+    success = corporate_actions_handler.add_corporate_action(action)
+    
+    if success:
+        return {"status": "added", "action": action.to_dict()}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to add action (duplicate?)")
+
+
+@api_router.post("/corporate-actions/dividend", response_model=dict)
+async def add_dividend(
+    symbol: str,
+    amount: float,
+    ex_date: str,
+    payment_date: Optional[str] = None,
+    is_stock_dividend: bool = False
+):
+    """
+    Add a dividend corporate action
+    
+    Args:
+        symbol: Stock symbol
+        amount: Dividend per share (cash) or percentage (stock dividend)
+        ex_date: Ex-dividend date (YYYY-MM-DD)
+        payment_date: Optional payment date (YYYY-MM-DD)
+        is_stock_dividend: True if stock dividend (amount is percentage)
+    """
+    try:
+        ex_datetime = datetime.fromisoformat(ex_date).replace(tzinfo=timezone.utc)
+        pay_datetime = None
+        if payment_date:
+            pay_datetime = datetime.fromisoformat(payment_date).replace(tzinfo=timezone.utc)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    action = corporate_actions_handler.create_dividend_action(
+        symbol=symbol.upper(),
+        amount=amount,
+        ex_date=ex_datetime,
+        payment_date=pay_datetime,
+        is_stock_dividend=is_stock_dividend
+    )
+    
+    success = corporate_actions_handler.add_corporate_action(action)
+    
+    if success:
+        return {"status": "added", "action": action.to_dict()}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to add action (duplicate?)")
+
+
+@api_router.post("/corporate-actions/process/{symbol}", response_model=dict)
+async def process_corporate_actions_for_symbol(symbol: str):
+    """
+    Process all pending corporate actions for a symbol
+    Applies to current positions
+    """
+    symbol = symbol.upper()
+    
+    # Get current position
+    if not state.connector:
+        raise HTTPException(status_code=503, detail="Not connected")
+    
+    positions = await state.connector.get_positions()
+    qty = positions.get(symbol, 0)
+    
+    if qty == 0:
+        return {
+            "status": "no_position",
+            "message": f"No position in {symbol} to adjust"
+        }
+    
+    # Get market data for current price
+    market_data = await state.connector.get_market_data(symbol)
+    current_price = market_data.last if market_data else None
+    
+    # Get pending actions for this symbol
+    pending = corporate_actions_handler.get_pending_actions(symbol)
+    
+    if not pending:
+        return {
+            "status": "no_actions",
+            "message": f"No pending corporate actions for {symbol}"
+        }
+    
+    # Create position object
+    position = Position(
+        symbol=symbol,
+        quantity=qty,
+        avg_cost=current_price * 0.98 if current_price else 100.0  # Estimate
+    )
+    
+    # Process each action
+    adjustments = []
+    for action in pending:
+        if not action.processed:
+            updated_position, adjustment = corporate_actions_handler.apply_action_to_position(
+                position, action, current_price
+            )
+            position = updated_position
+            adjustments.append(adjustment.to_dict())
+    
+    # Get cash adjustment
+    cash_adjustment = corporate_actions_handler.get_cash_adjustment()
+    
+    return {
+        "status": "processed",
+        "symbol": symbol,
+        "adjustments": adjustments,
+        "final_position": {
+            "quantity": position.quantity,
+            "avg_cost": round(position.avg_cost, 4)
+        },
+        "cash_adjustment": round(cash_adjustment, 2)
+    }
+
+
+@api_router.get("/corporate-actions/history", response_model=dict)
+async def get_corporate_actions_history(symbol: Optional[str] = None, limit: int = 100):
+    """
+    Get history of position adjustments from corporate actions
+    
+    Args:
+        symbol: Optional symbol filter
+        limit: Maximum records to return
+    """
+    history = corporate_actions_handler.get_adjustment_history(symbol, limit)
+    return {
+        "count": len(history),
+        "history": history
+    }
+
+
 # Include router
 app.include_router(api_router)
 
