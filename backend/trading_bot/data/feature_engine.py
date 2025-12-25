@@ -104,10 +104,14 @@ class FeatureSet:
     
     def to_dict(self) -> Dict:
         """Convert to dictionary"""
-        return {
-            k: v for k, v in self.__dict__.items()
-            if not k.startswith('_')
-        }
+        result = {}
+        for k, v in self.__dict__.items():
+            if not k.startswith('_'):
+                if hasattr(v, 'isoformat'):  # datetime
+                    result[k] = v.isoformat()
+                else:
+                    result[k] = v
+        return result
     
     def to_vector(self) -> List[float]:
         """Convert to feature vector for ML models"""
