@@ -26,17 +26,20 @@ export default function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [killSwitchActive, setKillSwitchActive] = useState(false);
+  const [currentRegime, setCurrentRegime] = useState('sideways');
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const [dashboardRes, featuresRes] = await Promise.all([
+      const [dashboardRes, featuresRes, regimeRes] = await Promise.all([
         axios.get(`${API_URL}/api/dashboard`),
-        axios.get(`${API_URL}/api/features`)
+        axios.get(`${API_URL}/api/features`),
+        axios.get(`${API_URL}/api/ensemble/regime`).catch(() => ({ data: { current_regime: 'sideways' } }))
       ]);
       
       setDashboardData(dashboardRes.data);
       setFeatures(featuresRes.data);
       setKillSwitchActive(dashboardRes.data.system_status?.status === 'kill_switch_active');
+      setCurrentRegime(regimeRes.data.current_regime || 'sideways');
       setError(null);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
