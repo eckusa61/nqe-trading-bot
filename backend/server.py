@@ -811,6 +811,138 @@ async def get_last_backtest():
     return state.last_backtest_result
 
 
+# ===== Guardian/Risk Endpoints =====
+
+@api_router.get("/guardian/status", response_model=dict)
+async def get_guardian_status():
+    """Get Guardian Agent status"""
+    if not state.guardian:
+        raise HTTPException(status_code=503, detail="Guardian not initialized")
+    return state.guardian.get_status()
+
+
+@api_router.post("/guardian/evaluate", response_model=dict)
+async def evaluate_trade_with_guardian(
+    symbol: str,
+    side: str,
+    quantity: int,
+    price: float,
+    strategy: str = "Manual"
+):
+    """Evaluate a trade request with Guardian"""
+    if not state.guardian:
+        raise HTTPException(status_code=503, detail="Guardian not initialized")
+    
+    request = TradeRequest(
+        symbol=symbol,
+        side=side,
+        quantity=quantity,
+        price=price,
+        strategy=strategy,
+        signal_strength=0.5,
+        confidence=0.5
+    )
+    
+    decision = state.guardian.evaluate_trade(request)
+    
+    return {
+        "action": decision.action.value,
+        "original_quantity": request.quantity,
+        "modified_quantity": decision.modified_quantity,
+        "reason": decision.reason,
+        "risk_score": decision.risk_score,
+        "checks_passed": decision.checks_passed,
+        "checks_failed": decision.checks_failed
+    }
+
+
+@api_router.post("/guardian/update-state", response_model=dict)
+async def update_guardian_state(
+    drawdown: float = None,
+    vix: float = None,
+    sharpe: float = None,
+    portfolio_value: float = None
+):
+    """Update Guardian state with current metrics"""
+    if not state.guardian:
+        raise HTTPException(status_code=503, detail="Guardian not initialized")
+    
+    state.guardian.update_state(
+        drawdown=drawdown,
+        vix=vix,
+        sharpe=sharpe,
+        portfolio_value=portfolio_value
+    )
+    
+    return {"status": "updated", "guardian_status": state.guardian.get_status()}
+
+
+@api_router.get("/reconciliation/status", response_model=dict)
+async def get_reconciliation_status():
+    """Get reconciliation status"""
+    if not state.reconciliation:
+        raise HTTPException(status_code=503, detail="Reconciliation not initialized")
+    return state.reconciliation.get_status()
+
+
+@api_router.post("/reconciliation/run", response_model=dict)
+async def run_reconciliation():
+    """Run reconciliation check"""
+    if not state.reconciliation or not state.connector:
+        raise HTTPException(status_code=503, detail="Services not initialized")
+    
+    # Get broker state
+    broker_positions = await state.connector.get_positions()
+    broker_summary = await state.connector.get_account_summary()
+    broker_cash = broker_summary.get('cash', 0)
+    
+    # Get system state (from connector's internal state for simulation)
+    system_positions = broker_positions  # In simulation, they're the same
+    system_cash = broker_cash
+    
+    # Run reconciliation
+    result = state.reconciliation.full_reconciliation(
+        broker_positions=broker_positions,
+        system_positions=system_positions,
+        broker_cash=broker_cash,
+        system_cash=system_cash
+    )
+    
+    return result
+
+
+@api_router.get("/reconciliation/history", response_model=dict)
+async def get_reconciliation_history(limit: int = 20):
+    """Get reconciliation discrepancy history"""
+    if not state.reconciliation:
+        raise HTTPException(status_code=503, detail="Reconciliation not initialized")
+    return {"history": state.reconciliation.get_history(limit)}
+
+
+@api_router.get("/pdt/status", response_model=dict)
+async def get_pdt_status():
+    """Get PDT enforcer status"""
+    if not state.pdt_enforcer or not state.connector:
+        raise HTTPException(status_code=503, detail="Services not initialized")
+    
+    account = await state.connector.get_account_summary()
+    account_value = account.get('portfolio_value', 0)
+    
+    return state.pdt_enforcer.get_status(account_value)
+
+
+@api_router.post("/pdt/check", response_model=dict)
+async def check_pdt_for_trade(symbol: str, side: str):
+    """Check if trade would violate PDT rules"""
+    if not state.pdt_enforcer or not state.connector:
+        raise HTTPException(status_code=503, detail="Services not initialized")
+    
+    account = await state.connector.get_account_summary()
+    account_value = account.get('portfolio_value', 0)
+    
+    return state.pdt_enforcer.check_before_trade(symbol, side, account_value)
+
+
 # ===== Webhook/Alert Endpoints =====
 
 @api_router.get("/webhooks", response_model=WebhookConfigResponse)
