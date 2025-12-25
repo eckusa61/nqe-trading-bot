@@ -1,5 +1,5 @@
 # Strategies module
-from .base_strategy import BaseStrategy, Signal, StrategyResult
+from .base_strategy import BaseStrategy, Signal, StrategyResult, strategy_registry
 from .momentum import MomentumStrategy
 from .mean_reversion import MeanReversionStrategy
 from .volatility_breakout import VolatilityBreakoutStrategy
