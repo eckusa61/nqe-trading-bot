@@ -113,6 +113,12 @@ async def startup():
     # Initialize feature engine
     state.feature_engine = FeatureEngine()
     
+    # Initialize backtest engine
+    state.backtest_engine = BacktestEngine()
+    
+    # Initialize strategies
+    init_strategies()
+    
     logger.info(f"Trading Bot initialized in {CONFIG.mode.value} mode")
     
     # Start background task to load data
