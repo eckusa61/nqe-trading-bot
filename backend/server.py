@@ -85,6 +85,9 @@ class TradingState:
         self.guardian: Optional[GuardianAgent] = None
         self.reconciliation: Optional[ReconciliationEngine] = None
         self.pdt_enforcer: Optional[PDTEnforcer] = None
+        self.regime_detector: Optional[RegimeDetector] = None
+        self.weight_manager: Optional[StrategyWeightManager] = None
+        self.meta_learner: Optional[MetaLearner] = None
         self.start_time: datetime = datetime.now(timezone.utc)
         self.kill_switch_active: bool = False
         self.current_regime: MarketRegime = MarketRegime.SIDEWAYS
