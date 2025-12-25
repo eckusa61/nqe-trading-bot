@@ -132,6 +132,19 @@ TARGET_VOLATILITY = 15%
 - [x] Frontend configuration UI
 
 ### Phase 3: Advanced Features
+- [ ] HMM Regime Detection (3-4 states)
+- [ ] Multi-strategy ensemble with dynamic weights
+- [ ] Self-learning loop (daily/weekly/monthly adaptation)
+- [ ] Full Guardian behavioral analysis
+
+### Phase 2.5: Production Hardening - COMPLETED ✅
+- [x] Guardian Agent (trade approval/modification/rejection)
+- [x] Reconciliation Engine (position/cash sync)
+- [x] Connection Manager (resilience, auto-reconnect)
+- [x] PDT Rule Enforcer (day trade limits)
+- [x] Behavioral risk detection (revenge trading, overconfidence)
+- [x] VIX-based position sizing
+- [x] Rolling Sharpe monitoring
 - [ ] Hidden Markov Model regime detection
 - [ ] Multi-strategy ensemble with dynamic weights
 - [ ] Meta-learner (XGBoost)
