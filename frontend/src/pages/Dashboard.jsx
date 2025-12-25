@@ -103,7 +103,7 @@ export default function Dashboard() {
               <span className="text-[10px] text-muted-foreground ml-8">Development by ECK</span>
             </div>
             <div className="hidden md:block h-6 w-px bg-border" />
-            <RegimeIndicator regime={dashboardData?.regime || 'sideways'} />
+            <RegimeIndicator regime={currentRegime} />
           </div>
           
           <div className="flex items-center gap-3">
