@@ -153,9 +153,10 @@ export default function Dashboard() {
             <PositionsTable positions={dashboardData?.account?.positions || []} />
           </div>
 
-          {/* Right Column - System, Trades, Features */}
+          {/* Right Column - System, Market, Trades, Features */}
           <div className="lg:col-span-4 space-y-6">
             <SystemHealth status={dashboardData?.system_status} />
+            <MarketStatus />
             <TradesTable trades={dashboardData?.recent_trades || []} />
             <FeaturesGrid features={features} />
           </div>
