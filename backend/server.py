@@ -56,6 +56,9 @@ from trading_bot.ensemble import (
     RegimeDetector, MarketRegime as EnsembleMarketRegime, RegimeState,
     StrategyWeightManager, MetaLearner, EnsembleSignal
 )
+from trading_bot.notifications import telegram_manager, TelegramManager
+from trading_bot.ai import ai_supervisor, AISupervisor
+from trading_bot.social import social_analyzer, SocialSentimentAnalyzer
 
 # Configure logging
 logging.basicConfig(
@@ -66,9 +69,9 @@ logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
-    title="Institutional Trading Bot API",
-    description="Phase 1: Foundation - IBKR Connection, Data, Features",
-    version="1.0.0"
+    title="NQE Trading Bot API",
+    description="Institutional Trading Bot with AI Supervisor",
+    version="2.0.0"
 )
 
 # Create API router with /api prefix
