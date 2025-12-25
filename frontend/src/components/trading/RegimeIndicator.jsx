@@ -2,6 +2,13 @@ import { Shield, Zap } from 'lucide-react';
 
 export const RegimeIndicator = ({ regime = 'sideways' }) => {
   const regimeConfig = {
+    bull: {
+      label: 'BULL',
+      sublabel: 'Positive Trend',
+      color: 'profit',
+      bgClass: 'regime-bull',
+      icon: '📈'
+    },
     bull_quiet: {
       label: 'BULL',
       sublabel: 'Low Volatility',
@@ -15,6 +22,13 @@ export const RegimeIndicator = ({ regime = 'sideways' }) => {
       color: 'profit',
       bgClass: 'regime-bull',
       icon: '🚀'
+    },
+    bear: {
+      label: 'BEAR',
+      sublabel: 'Negative Trend',
+      color: 'loss',
+      bgClass: 'regime-bear',
+      icon: '📉'
     },
     bear_quiet: {
       label: 'BEAR',
