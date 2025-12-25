@@ -90,11 +90,14 @@ export default function Dashboard() {
       <header className="glass-header sticky top-0 z-50 px-4 md:px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Activity className="w-6 h-6 text-primary" />
-              <h1 className="text-xl font-bold tracking-tight text-foreground">
-                TradingBot
-              </h1>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <Activity className="w-6 h-6 text-primary" />
+                <h1 className="text-xl font-bold tracking-tight text-foreground">
+                  TradingBot
+                </h1>
+              </div>
+              <span className="text-[10px] text-muted-foreground ml-8">Development by ECK</span>
             </div>
             <div className="hidden md:block h-6 w-px bg-border" />
             <RegimeIndicator regime={dashboardData?.regime || 'sideways'} />
