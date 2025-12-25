@@ -36,6 +36,11 @@ from trading_bot.models import (
     DashboardData, OrderRequest, BacktestRequest, ConfigUpdate, KillSwitchAction,
     PerformanceMetrics
 )
+from trading_bot.monitoring import alert_manager, Alert, AlertLevel, AlertType
+from trading_bot.monitoring.models import (
+    WebhookConfigRequest, WebhookConfigResponse, AlertResponse,
+    AlertHistoryResponse, TestAlertRequest
+)
 
 # Configure logging
 logging.basicConfig(
