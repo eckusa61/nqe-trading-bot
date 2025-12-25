@@ -1,0 +1,42 @@
+{
+  "name": "NQE Trading Bot",
+  "version": "2.0.0",
+  "description": "Institutional-Grade Autonomous Trading Bot",
+  "author": "ECK",
+  "features": [
+    "IBKR Integration (TWS/Gateway)",
+    "AI Supervisor (OpenAI + Claude)",
+    "HMM Regime Detection",
+    "5 Trading Strategies",
+    "Telegram Notifications (4 channels)",
+    "Multi-Market Support (Stocks, Crypto, Forex)",
+    "Real-time Sentiment Analysis",
+    "Risk Management (Guardian, PDT, Time Sync)",
+    "Corporate Actions Handler"
+  ],
+  "data_sources": [
+    "StockTwits (Free)",
+    "Yahoo Finance (Free)",
+    "CoinGecko (Crypto - Free)",
+    "Binance (Crypto - Free)",
+    "Forex API (Free)",
+    "Finviz (Free)",
+    "Twitter/Nitter (Free)"
+  ],
+  "requirements": {
+    "python": ">=3.11",
+    "node": ">=18.0",
+    "ibkr": "TWS or IB Gateway"
+  },
+  "api_keys_needed": [
+    "OPENAI_API_KEY",
+    "CLAUDE_API_KEY",
+    "TELEGRAM_*_TOKEN (4 bots)"
+  ],
+  "optional_api_keys": [
+    "REDDIT_CLIENT_ID",
+    "REDDIT_CLIENT_SECRET",
+    "NEWSAPI_KEY",
+    "ALPHAVANTAGE_KEY"
+  ]
+}
