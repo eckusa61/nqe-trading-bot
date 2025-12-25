@@ -608,8 +608,8 @@ async def root():
     """API root"""
     return {
         "name": "Institutional Trading Bot API",
-        "version": "1.0.0",
-        "phase": "1 - Foundation",
+        "version": "2.0.0",
+        "phase": "2 - Strategies & Backtesting",
         "mode": CONFIG.mode.value,
         "endpoints": [
             "/api/status",
@@ -622,9 +622,178 @@ async def root():
             "/api/orders",
             "/api/config",
             "/api/webhooks",
-            "/api/alerts"
+            "/api/alerts",
+            "/api/strategies",
+            "/api/strategies/{name}/signals",
+            "/api/backtest"
         ]
     }
+
+
+# ===== Strategy Endpoints =====
+
+@api_router.get("/strategies", response_model=List[dict])
+async def get_strategies():
+    """Get all registered strategies"""
+    strategies = strategy_registry.get_all()
+    return [
+        {
+            "name": s.name,
+            "description": s.description,
+            "enabled": s.enabled,
+            "parameters": s.get_parameters()
+        }
+        for s in strategies
+    ]
+
+
+@api_router.get("/strategies/{name}", response_model=dict)
+async def get_strategy(name: str):
+    """Get a specific strategy"""
+    strategy = strategy_registry.get(name)
+    if not strategy:
+        raise HTTPException(status_code=404, detail=f"Strategy '{name}' not found")
+    
+    return {
+        "name": strategy.name,
+        "description": strategy.description,
+        "enabled": strategy.enabled,
+        "parameters": strategy.get_parameters()
+    }
+
+
+@api_router.post("/strategies/{name}/toggle", response_model=dict)
+async def toggle_strategy(name: str):
+    """Enable/disable a strategy"""
+    strategy = strategy_registry.get(name)
+    if not strategy:
+        raise HTTPException(status_code=404, detail=f"Strategy '{name}' not found")
+    
+    strategy.enabled = not strategy.enabled
+    return {"name": strategy.name, "enabled": strategy.enabled}
+
+
+@api_router.get("/strategies/{name}/signals", response_model=List[dict])
+async def get_strategy_signals(name: str):
+    """Generate signals for a specific strategy"""
+    strategy = strategy_registry.get(name)
+    if not strategy:
+        raise HTTPException(status_code=404, detail=f"Strategy '{name}' not found")
+    
+    # Get current features
+    features_list = []
+    for symbol in CONFIG.symbols.all_symbols:
+        if symbol in state.cached_features:
+            features_list.append(state.cached_features[symbol])
+        else:
+            await update_features(symbol)
+            if symbol in state.cached_features:
+                features_list.append(state.cached_features[symbol])
+    
+    if not features_list:
+        return []
+    
+    result = strategy.evaluate(features_list)
+    return [s.to_dict() for s in result.signals]
+
+
+@api_router.get("/signals", response_model=List[dict])
+async def get_all_signals():
+    """Generate signals from all enabled strategies"""
+    # Get current features
+    features_list = []
+    for symbol in CONFIG.symbols.all_symbols:
+        if symbol in state.cached_features:
+            features_list.append(state.cached_features[symbol])
+    
+    if not features_list:
+        return []
+    
+    results = strategy_registry.evaluate_all(features_list)
+    
+    all_signals = []
+    for result in results:
+        for signal in result.signals:
+            all_signals.append(signal.to_dict())
+    
+    return all_signals
+
+
+# ===== Backtest Endpoints =====
+
+@api_router.post("/backtest", response_model=dict)
+async def run_backtest(request: BacktestRequest, background_tasks: BackgroundTasks):
+    """
+    Run backtest for specified strategies
+    
+    Request body:
+    - symbols: List of symbols to trade
+    - start_date: Backtest start date (ISO format)
+    - end_date: Backtest end date (ISO format)
+    - initial_capital: Starting capital
+    - strategies: List of strategy names to test
+    - leverage: Target leverage (1.0 = no leverage)
+    """
+    if not state.data_manager:
+        raise HTTPException(status_code=503, detail="Data manager not initialized")
+    
+    # Get strategies
+    strategies_to_test = []
+    for name in request.strategies:
+        strategy = strategy_registry.get(name)
+        if strategy:
+            strategies_to_test.append(strategy)
+    
+    if not strategies_to_test:
+        raise HTTPException(status_code=400, detail="No valid strategies specified")
+    
+    # Get historical data for symbols
+    historical_data = {}
+    for symbol in request.symbols:
+        bars = state.data_manager.get_historical_bars(symbol)
+        if bars:
+            historical_data[symbol] = bars
+    
+    if not historical_data:
+        raise HTTPException(status_code=400, detail="No historical data available for specified symbols")
+    
+    # Parse dates
+    try:
+        start_date = datetime.fromisoformat(request.start_date) if request.start_date else None
+        end_date = datetime.fromisoformat(request.end_date) if request.end_date else None
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format")
+    
+    # Run backtest for each strategy
+    results = []
+    for strategy in strategies_to_test:
+        backtest_engine = BacktestEngine(initial_capital=request.initial_capital)
+        result = backtest_engine.run(
+            strategy=strategy,
+            historical_data=historical_data,
+            start_date=start_date,
+            end_date=end_date
+        )
+        results.append(result.to_dict())
+    
+    # Store last result
+    state.last_backtest_result = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "results": results
+    }
+    
+    return {
+        "status": "completed",
+        "results": results
+    }
+
+
+@api_router.get("/backtest/last", response_model=dict)
+async def get_last_backtest():
+    """Get the last backtest result"""
+    if not state.last_backtest_result:
+        raise HTTPException(status_code=404, detail="No backtest results available")
+    return state.last_backtest_result
 
 
 # ===== Webhook/Alert Endpoints =====
