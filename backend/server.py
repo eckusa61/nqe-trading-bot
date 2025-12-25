@@ -131,6 +131,9 @@ async def startup():
     # Initialize strategies
     init_strategies()
     
+    # Initialize risk modules
+    init_risk_modules()
+    
     logger.info(f"Trading Bot initialized in {CONFIG.mode.value} mode")
     
     # Start background task to load data
