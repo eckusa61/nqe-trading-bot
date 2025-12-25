@@ -41,6 +41,12 @@ from trading_bot.monitoring.models import (
     WebhookConfigRequest, WebhookConfigResponse, AlertResponse,
     AlertHistoryResponse, TestAlertRequest
 )
+from trading_bot.strategies import (
+    BaseStrategy, Signal, StrategyResult, strategy_registry,
+    MomentumStrategy, MeanReversionStrategy, VolatilityBreakoutStrategy,
+    TrendFollowingStrategy, StatisticalArbitrageStrategy
+)
+from trading_bot.backtest import BacktestEngine, BacktestResult, RealisticCostModel, PerformanceAnalyzer
 
 # Configure logging
 logging.basicConfig(
