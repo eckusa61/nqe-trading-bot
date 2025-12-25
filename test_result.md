@@ -101,3 +101,110 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Build institutional-grade autonomous trading bot for IBKR with Time Sync Manager and Corporate Actions Handler modules"
+
+backend:
+  - task: "Time Sync Manager - Market Status"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/trading_bot/risk/time_sync_manager.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented TimeSyncManager with pandas_market_calendars for NYSE calendar. Features: market hours validation, holiday detection, broker time sync."
+
+  - task: "Time Sync Manager - Can Trade Validation"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/trading_bot/risk/time_sync_manager.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented order time validation with buffer zones (5 min before open/close). Returns allowed/reason/suggested_action."
+
+  - task: "Time Sync Manager - Trading Calendar"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/trading_bot/risk/time_sync_manager.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented trading calendar API showing upcoming trading days and holidays. Uses pandas_market_calendars for accuracy."
+
+  - task: "Corporate Actions - Stock Split Handler"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/trading_bot/risk/corporate_actions.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented stock split processing (forward and reverse). Adjusts quantity, avg cost, handles fractional shares."
+
+  - task: "Corporate Actions - Dividend Handler"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/trading_bot/risk/corporate_actions.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented cash and stock dividend processing. Cash dividends add to account, stock dividends adjust position."
+
+  - task: "Corporate Actions - API Endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added endpoints: /api/corporate-actions/split, /api/corporate-actions/dividend, /api/corporate-actions/process/{symbol}, /api/corporate-actions/pending"
+
+  - task: "Market Status API Endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added endpoints: /api/market/status, /api/market/can-trade, /api/market/calendar, /api/market/time-sync-status"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Time Sync Manager - Market Status"
+    - "Time Sync Manager - Can Trade Validation"
+    - "Corporate Actions - Stock Split Handler"
+    - "Corporate Actions - Dividend Handler"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Implemented Module 5 (Time Sync Manager) and Module 6 (Corporate Actions Handler) for live trading. Time Sync uses pandas_market_calendars for 100% accurate NYSE calendar. Corporate Actions handles splits, dividends, and position adjustments. Please test all backend endpoints thoroughly. Today is Christmas so market should show as holiday."
