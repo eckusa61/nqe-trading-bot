@@ -52,6 +52,10 @@ from trading_bot.risk import (
     TimeSyncManager, time_sync_manager, MarketSession, MarketStatus, OrderTimeValidation,
     CorporateActionsHandler, corporate_actions_handler, CorporateAction, CorporateActionType, Position, PositionAdjustment
 )
+from trading_bot.ensemble import (
+    RegimeDetector, MarketRegime as EnsembleMarketRegime, RegimeState,
+    StrategyWeightManager, MetaLearner, EnsembleSignal
+)
 
 # Configure logging
 logging.basicConfig(
