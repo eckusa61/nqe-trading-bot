@@ -54,3 +54,7 @@ YOUR_API_KEYS.txt
 *.backup
 .env.backup
 .env.local
+-e 
+# Environment files
+*.env
+*.env.*
