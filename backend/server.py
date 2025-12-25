@@ -117,6 +117,17 @@ def init_risk_modules():
     state.pdt_enforcer = PDTEnforcer()
     logger.info("Risk modules initialized: Guardian, Reconciliation, PDT")
 
+# Initialize ensemble modules
+def init_ensemble_modules():
+    """Initialize Regime Detector, Weight Manager, Meta-Learner"""
+    state.regime_detector = RegimeDetector()
+    state.weight_manager = StrategyWeightManager()
+    state.meta_learner = MetaLearner(
+        regime_detector=state.regime_detector,
+        weight_manager=state.weight_manager
+    )
+    logger.info("Ensemble modules initialized: RegimeDetector, WeightManager, MetaLearner")
+
 
 # ===== Startup/Shutdown Events =====
 
