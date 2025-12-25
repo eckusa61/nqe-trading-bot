@@ -59,6 +59,20 @@ from trading_bot.ensemble import (
 from trading_bot.notifications import telegram_manager, TelegramManager
 from trading_bot.ai import ai_supervisor, AISupervisor
 from trading_bot.social import social_analyzer, SocialSentimentAnalyzer
+from trading_bot.social.data_sources import (
+    RedditFeed, StockTwitsFeed, YahooFinanceFeed,
+    CryptoFeed, NewsFeed, FinvizFeed, ForexFeed, TwitterFeed
+)
+
+# Initialize data feeds
+reddit_feed = RedditFeed()
+stocktwits_feed = StockTwitsFeed()
+yahoo_feed = YahooFinanceFeed()
+crypto_feed = CryptoFeed()
+news_feed = NewsFeed()
+finviz_feed = FinvizFeed()
+forex_feed = ForexFeed()
+twitter_feed = TwitterFeed()
 
 # Configure logging
 logging.basicConfig(
@@ -70,7 +84,7 @@ logger = logging.getLogger(__name__)
 # Create FastAPI app
 app = FastAPI(
     title="NQE Trading Bot API",
-    description="Institutional Trading Bot with AI Supervisor",
+    description="Institutional Trading Bot with AI Supervisor - All Markets",
     version="2.0.0"
 )
 
