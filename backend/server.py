@@ -596,9 +596,102 @@ async def root():
             "/api/positions",
             "/api/trades",
             "/api/orders",
-            "/api/config"
+            "/api/config",
+            "/api/webhooks",
+            "/api/alerts"
         ]
     }
+
+
+# ===== Webhook/Alert Endpoints =====
+
+@api_router.get("/webhooks", response_model=WebhookConfigResponse)
+async def get_webhook_config():
+    """Get current webhook configuration"""
+    return WebhookConfigResponse(
+        slack_configured=bool(alert_manager.config.slack_url),
+        discord_configured=bool(alert_manager.config.discord_url),
+        enabled=alert_manager.config.enabled,
+        rate_limit=alert_manager.config.rate_limit,
+        enabled_alerts=[a.value for a in alert_manager.config.enabled_alerts]
+    )
+
+
+@api_router.post("/webhooks", response_model=WebhookConfigResponse)
+async def configure_webhooks(config: WebhookConfigRequest):
+    """Configure Slack/Discord webhook URLs"""
+    alert_manager.update_config(
+        slack_url=config.slack_url,
+        discord_url=config.discord_url,
+        enabled=config.enabled
+    )
+    
+    return WebhookConfigResponse(
+        slack_configured=bool(alert_manager.config.slack_url),
+        discord_configured=bool(alert_manager.config.discord_url),
+        enabled=alert_manager.config.enabled,
+        rate_limit=alert_manager.config.rate_limit,
+        enabled_alerts=[a.value for a in alert_manager.config.enabled_alerts]
+    )
+
+
+@api_router.get("/alerts", response_model=AlertHistoryResponse)
+async def get_alert_history(limit: int = 50):
+    """Get recent alert history"""
+    history = alert_manager.get_alert_history(limit=limit)
+    return AlertHistoryResponse(
+        alerts=[AlertResponse(**a) for a in history],
+        total=len(history)
+    )
+
+
+@api_router.post("/alerts/test", response_model=dict)
+async def send_test_alert(request: TestAlertRequest):
+    """Send a test alert to configured webhooks"""
+    if not alert_manager.config.slack_url and not alert_manager.config.discord_url:
+        raise HTTPException(
+            status_code=400, 
+            detail="No webhooks configured. Set slack_url or discord_url first."
+        )
+    
+    test_alert = Alert(
+        alert_type=AlertType.DRAWDOWN_WARNING,
+        level=AlertLevel.INFO,
+        title="Test Alert",
+        message="This is a test alert from TradingBot to verify webhook configuration.",
+        data={
+            "Type": request.alert_type,
+            "Status": "TEST",
+            "System": "TradingBot Phase 1"
+        }
+    )
+    
+    # Force send regardless of level filter
+    original_level = alert_manager.config.min_level
+    alert_manager.config.min_level = AlertLevel.INFO
+    
+    success = await alert_manager.send_alert(test_alert)
+    
+    alert_manager.config.min_level = original_level
+    
+    if success:
+        return {"status": "sent", "message": "Test alert sent successfully"}
+    else:
+        return {"status": "failed", "message": "Failed to send test alert. Check webhook URLs."}
+
+
+@api_router.post("/alerts/drawdown-warning", response_model=dict)
+async def trigger_drawdown_warning(drawdown: float = 10.5):
+    """Manually trigger a drawdown warning (for testing)"""
+    await alert_manager.alert_drawdown_warning(drawdown, threshold=10.0)
+    return {"status": "sent", "drawdown": drawdown}
+
+
+@api_router.post("/alerts/connection-lost", response_model=dict)
+async def trigger_connection_lost():
+    """Manually trigger connection lost alert (for testing)"""
+    await alert_manager.alert_connection_lost("IBKR")
+    return {"status": "sent", "alert": "connection_lost"}
 
 
 # Include router
