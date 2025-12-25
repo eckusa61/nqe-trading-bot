@@ -111,6 +111,9 @@ async def shutdown():
     
     if state.data_manager:
         state.data_manager.close()
+    
+    # Close alert manager session
+    await alert_manager.close()
 
 
 async def load_initial_data():
