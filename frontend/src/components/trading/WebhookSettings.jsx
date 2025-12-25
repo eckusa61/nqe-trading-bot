@@ -118,26 +118,42 @@ export const WebhookSettings = () => {
           
           {/* Slack URL */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Slack Webhook URL</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-foreground">Slack Webhook URL</label>
+              {savedConfig.slack_configured && (
+                <span className="text-xs profit">Configured</span>
+              )}
+            </div>
             <Input
               type="url"
-              placeholder={savedConfig.slack_configured ? "••••••• (configured)" : "https://hooks.slack.com/services/..."}
+              placeholder="https://hooks.slack.com/services/..."
               value={config.slack_url}
               onChange={(e) => setConfig({ ...config, slack_url: e.target.value })}
               className="bg-background border-input"
             />
+            {savedConfig.slack_configured && !config.slack_url && (
+              <p className="text-xs text-muted-foreground">Leave empty to keep current URL, or enter new URL to replace</p>
+            )}
           </div>
           
           {/* Discord URL */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Discord Webhook URL</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-foreground">Discord Webhook URL</label>
+              {savedConfig.discord_configured && (
+                <span className="text-xs profit">Configured</span>
+              )}
+            </div>
             <Input
               type="url"
-              placeholder={savedConfig.discord_configured ? "••••••• (configured)" : "https://discord.com/api/webhooks/..."}
+              placeholder="https://discord.com/api/webhooks/..."
               value={config.discord_url}
               onChange={(e) => setConfig({ ...config, discord_url: e.target.value })}
               className="bg-background border-input"
             />
+            {savedConfig.discord_configured && !config.discord_url && (
+              <p className="text-xs text-muted-foreground">Leave empty to keep current URL, or enter new URL to replace</p>
+            )}
           </div>
           
           {/* Enable/Disable */}
