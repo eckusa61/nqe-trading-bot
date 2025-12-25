@@ -10,7 +10,8 @@ import {
   TradesTable,
   PortfolioChart,
   FeaturesGrid,
-  SystemHealth
+  SystemHealth,
+  WebhookSettings
 } from '../components/trading';
 import axios from 'axios';
 
