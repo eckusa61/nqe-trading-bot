@@ -72,6 +72,7 @@ class TradingState:
         self.connector: Optional[BaseIBKRConnector] = None
         self.data_manager: Optional[DataManager] = None
         self.feature_engine: Optional[FeatureEngine] = None
+        self.backtest_engine: Optional[BacktestEngine] = None
         self.start_time: datetime = datetime.now(timezone.utc)
         self.kill_switch_active: bool = False
         self.current_regime: MarketRegime = MarketRegime.SIDEWAYS
@@ -79,8 +80,19 @@ class TradingState:
         self.data_loaded: bool = False
         self.cached_features: Dict[str, FeatureSet] = {}
         self.portfolio_history: List[Dict] = []
+        self.last_backtest_result: Optional[Dict] = None
 
 state = TradingState()
+
+# Initialize strategies
+def init_strategies():
+    """Register all strategies"""
+    strategy_registry.register(MomentumStrategy())
+    strategy_registry.register(MeanReversionStrategy())
+    strategy_registry.register(VolatilityBreakoutStrategy())
+    strategy_registry.register(TrendFollowingStrategy())
+    strategy_registry.register(StatisticalArbitrageStrategy())
+    logger.info(f"Registered {len(strategy_registry.get_all())} strategies")
 
 
 # ===== Startup/Shutdown Events =====
