@@ -167,8 +167,8 @@ TARGET_VOLATILITY = 15%
 ### Simulated Mode (Default)
 ```bash
 # Backend runs automatically, generates realistic data
-curl https://quant-ensemble-1.preview.emergentagent.com/api/status
-curl https://quant-ensemble-1.preview.emergentagent.com/api/market-data
+curl https://ibkrbot.preview.emergentagent.com/api/status
+curl https://ibkrbot.preview.emergentagent.com/api/market-data
 ```
 
 ### Switch to Live Paper Trading
