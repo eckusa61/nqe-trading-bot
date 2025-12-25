@@ -1312,6 +1312,221 @@ async def get_corporate_actions_history(symbol: Optional[str] = None, limit: int
     }
 
 
+# ===== Ensemble System Endpoints =====
+
+@api_router.get("/ensemble/status", response_model=dict)
+async def get_ensemble_status():
+    """
+    Get full ensemble system status including:
+    - Current regime and probabilities
+    - Strategy weights by regime
+    - Meta-learner settings
+    """
+    if not state.meta_learner:
+        raise HTTPException(status_code=503, detail="Ensemble system not initialized")
+    
+    return state.meta_learner.get_status()
+
+
+@api_router.get("/ensemble/regime", response_model=dict)
+async def get_current_regime():
+    """
+    Get current market regime detected by HMM
+    
+    Returns:
+    - Current regime (bull/bear/sideways/crisis)
+    - Regime probabilities
+    - Confidence level
+    - Duration in current regime
+    """
+    if not state.regime_detector:
+        raise HTTPException(status_code=503, detail="Regime detector not initialized")
+    
+    # Update regime with current features
+    features_list = list(state.cached_features.values())
+    
+    if features_list:
+        regime_state = state.regime_detector.detect_from_features(features_list)
+        # Update global state
+        state.current_regime = MarketRegime(regime_state.current_regime.value)
+        return regime_state.to_dict()
+    
+    # Return current state without update
+    return {
+        "current_regime": state.regime_detector.current_state.value,
+        "regime_probabilities": {
+            r.value: round(p, 3)
+            for r, p in state.regime_detector.state_probabilities.items()
+        },
+        "confidence": 0.0,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "indicators": {}
+    }
+
+
+@api_router.post("/ensemble/regime/update", response_model=dict)
+async def update_regime_manually(
+    vix: float = 15.0,
+    return_20d: float = 0.0,
+    volatility: float = 0.15,
+    adx: float = 25.0
+):
+    """
+    Manually update regime with specific indicators
+    Useful for testing or when real data is unavailable
+    """
+    if not state.regime_detector:
+        raise HTTPException(status_code=503, detail="Regime detector not initialized")
+    
+    regime_state = state.regime_detector.update(
+        return_20d=return_20d,
+        volatility=volatility,
+        vix=vix,
+        adx=adx
+    )
+    
+    # Update global state
+    state.current_regime = MarketRegime(regime_state.current_regime.value)
+    
+    return regime_state.to_dict()
+
+
+@api_router.get("/ensemble/weights", response_model=dict)
+async def get_strategy_weights(regime: Optional[str] = None):
+    """
+    Get strategy weights for current or specified regime
+    
+    Args:
+        regime: Optional regime override (bull/bear/sideways/crisis)
+    """
+    if not state.weight_manager:
+        raise HTTPException(status_code=503, detail="Weight manager not initialized")
+    
+    if regime:
+        try:
+            target_regime = EnsembleMarketRegime(regime.lower())
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid regime: {regime}")
+    else:
+        target_regime = state.regime_detector.current_state if state.regime_detector else EnsembleMarketRegime.SIDEWAYS
+    
+    # Get optimal weights (includes performance adaptation and correlation penalty)
+    weights = state.weight_manager.get_optimal_weights(target_regime)
+    base_weights = state.weight_manager.get_weights(target_regime)
+    
+    return {
+        "regime": target_regime.value,
+        "optimal_weights": {k: round(v, 3) for k, v in weights.items()},
+        "base_weights": {k: round(v, 3) for k, v in base_weights.items()}
+    }
+
+
+@api_router.get("/ensemble/signal", response_model=dict)
+async def get_ensemble_signal():
+    """
+    Get combined ensemble signal from all strategies
+    
+    Returns weighted combination of all strategy signals based on current regime
+    """
+    if not state.meta_learner:
+        raise HTTPException(status_code=503, detail="Meta-learner not initialized")
+    
+    # Update regime first
+    features_list = list(state.cached_features.values())
+    if features_list:
+        state.meta_learner.update_regime(features_list)
+    
+    # Get signals from all strategies
+    strategy_results = []
+    for strategy in strategy_registry.get_all():
+        if strategy.enabled:
+            result = strategy.evaluate(features_list)
+            strategy_results.append(result)
+    
+    # Combine signals
+    ensemble_signals = state.meta_learner.combine_signals(strategy_results)
+    
+    return {
+        "regime": state.meta_learner.regime_detector.current_state.value,
+        "signals": [s.to_dict() for s in ensemble_signals],
+        "strategy_count": len(strategy_results),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+
+@api_router.get("/ensemble/signal/{symbol}", response_model=dict)
+async def get_ensemble_signal_for_symbol(symbol: str):
+    """
+    Get ensemble signal for a specific symbol
+    """
+    if not state.meta_learner:
+        raise HTTPException(status_code=503, detail="Meta-learner not initialized")
+    
+    symbol = symbol.upper()
+    
+    # Get summary from history
+    summary = state.meta_learner.get_ensemble_summary(symbol)
+    
+    if summary:
+        return summary
+    
+    # Generate fresh signal
+    full_response = await get_ensemble_signal()
+    
+    for signal in full_response.get("signals", []):
+        if signal.get("symbol") == symbol:
+            return signal
+    
+    return {
+        "symbol": symbol,
+        "message": "No signal available for this symbol"
+    }
+
+
+@api_router.get("/ensemble/regime/statistics", response_model=dict)
+async def get_regime_statistics():
+    """
+    Get statistics about regime detection over time
+    """
+    if not state.regime_detector:
+        raise HTTPException(status_code=503, detail="Regime detector not initialized")
+    
+    return state.regime_detector.get_regime_statistics()
+
+
+@api_router.post("/ensemble/weights/update", response_model=dict)
+async def update_strategy_weights(
+    regime: str,
+    weights: Dict[str, float]
+):
+    """
+    Manually update strategy weights for a regime
+    
+    Args:
+        regime: Target regime (bull/bear/sideways/crisis)
+        weights: Dictionary of strategy_name -> weight
+    """
+    if not state.weight_manager:
+        raise HTTPException(status_code=503, detail="Weight manager not initialized")
+    
+    try:
+        target_regime = EnsembleMarketRegime(regime.lower())
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid regime: {regime}")
+    
+    state.weight_manager.update_regime_weights(
+        regime=target_regime,
+        new_weights=weights,
+        reason="Manual API update"
+    )
+    
+    return {
+        "status": "updated",
+        "regime": target_regime.value,
+        "new_weights": state.weight_manager.get_weights(target_regime)
+    }
+
+
 # Include router
 app.include_router(api_router)
 
