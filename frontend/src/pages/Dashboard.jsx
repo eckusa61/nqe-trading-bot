@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Activity, RefreshCw, Settings } from 'lucide-react';
+import { Activity, RefreshCw, Settings, BarChart3 } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { Link } from 'react-router-dom';
 import {
   PnLTicker,
   KillSwitch,
