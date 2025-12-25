@@ -362,7 +362,7 @@ class TradingBotAPITester:
         if success:
             if isinstance(result, list) and len(result) == 5:
                 strategy_names = [s.get('name') for s in result]
-                expected_strategies = ['Momentum', 'MeanReversion', 'VolatilityBreakout', 'TrendFollowing', 'StatisticalArbitrage']
+                expected_strategies = ['Momentum', 'MeanReversion', 'VolatilityBreakout', 'TrendFollowing', 'StatArb']
                 
                 if all(name in strategy_names for name in expected_strategies):
                     self.log_test("Strategies - List All", True, f"Got {len(result)} strategies: {strategy_names}")
