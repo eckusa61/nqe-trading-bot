@@ -100,6 +100,16 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-3">
+            <Link to="/backtest">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+                data-testid="backtest-link"
+              >
+                <BarChart3 className="w-4 h-4" />
+              </Button>
+            </Link>
             <WebhookSettings />
             <Button
               variant="ghost"
