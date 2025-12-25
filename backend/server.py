@@ -1383,9 +1383,6 @@ async def update_regime_manually(
         adx=adx
     )
     
-    # Update global state
-    state.current_regime = MarketRegime(regime_state.current_regime.value)
-    
     return regime_state.to_dict()
 
 
