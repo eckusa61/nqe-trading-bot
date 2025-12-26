@@ -78,7 +78,7 @@ def get_all_strategies():
         MomentumStrategy(),
         VolatilityBreakoutStrategy(),
         TrendFollowingStrategy(),
-        StatArbStrategy(),
+        StatisticalArbitrageStrategy(),
         PairsTradingStrategy(),
         BreakoutStrategy(),
         RSIDivergenceStrategy(),
