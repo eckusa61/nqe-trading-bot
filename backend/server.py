@@ -2155,27 +2155,20 @@ async def get_full_dashboard():
     
     # Basic dashboard data
     if state.connector and state.data_manager:
-        account = state.connector.get_account()
-        positions = state.connector.get_positions()
+        account = await state.connector.get_account_summary()
+        positions = await state.connector.get_positions()
         
         dashboard_data["account"] = {
-            "equity": account.equity,
-            "cash": account.cash,
-            "buying_power": account.buying_power,
-            "daily_pnl": account.daily_pnl,
-            "unrealized_pnl": account.unrealized_pnl
+            "equity": account.get("equity", 100000),
+            "cash": account.get("cash", 50000),
+            "buying_power": account.get("buying_power", 100000),
+            "daily_pnl": account.get("daily_pnl", 0),
+            "unrealized_pnl": account.get("unrealized_pnl", 0)
         }
         
         dashboard_data["positions"] = [
-            {
-                "symbol": p.symbol,
-                "quantity": p.quantity,
-                "avg_cost": p.avg_cost,
-                "current_price": p.current_price,
-                "unrealized_pnl": p.unrealized_pnl,
-                "pnl_pct": (p.current_price - p.avg_cost) / p.avg_cost * 100 if p.avg_cost > 0 else 0
-            }
-            for p in positions
+            {"symbol": symbol, "quantity": qty}
+            for symbol, qty in positions.items()
         ]
     
     # Regime and signals
