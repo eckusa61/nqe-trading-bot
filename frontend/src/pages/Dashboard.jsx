@@ -147,11 +147,11 @@ export default function Dashboard() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-white" />
+                  <span className="text-white font-bold text-lg">ECK</span>
                 </div>
                 <div>
                   <h1 className="text-xl font-bold">NQE Trading Bot</h1>
-                  <span className="text-xs text-gray-500">Quantum Engine v2.0</span>
+                  <span className="text-xs text-gray-500">Quantum Engine v2.0 by ECK</span>
                 </div>
               </div>
               <Badge variant="outline" className={`ml-4 ${system.mode === 'live_paper' ? 'text-green-400 border-green-400' : 'text-yellow-400 border-yellow-400'}`}>
