@@ -1987,6 +1987,233 @@ async def get_symbol_news(symbol: str):
 # Include router
 app.include_router(api_router)
 
+
+# ===== NEW API ENDPOINTS =====
+
+# Signal Levels Endpoints
+@api_router.get("/signals/levels/{symbol}", response_model=dict)
+async def get_signal_levels(symbol: str):
+    """Get trading signal levels for a symbol"""
+    if state.data_manager:
+        data = state.data_manager.get_data(symbol.upper())
+        if data is not None and len(data) > 0:
+            market_data = {
+                'close': data['close'].tolist(),
+                'high': data['high'].tolist(),
+                'low': data['low'].tolist(),
+                'volume': data['volume'].tolist()
+            }
+            signal = signal_calculator.calculate_signal_levels(symbol.upper(), market_data)
+            return signal.to_dict()
+    return {"symbol": symbol, "error": "No data available"}
+
+
+@api_router.get("/signals/best", response_model=dict)
+async def get_best_signals():
+    """Get best buy and sell signals across all symbols"""
+    # Calculate signals for all tracked symbols
+    for symbol in CONFIG.symbols.all_symbols:
+        if state.data_manager:
+            data = state.data_manager.get_data(symbol)
+            if data is not None and len(data) > 0:
+                market_data = {
+                    'close': data['close'].tolist(),
+                    'high': data['high'].tolist(),
+                    'low': data['low'].tolist(),
+                    'volume': data['volume'].tolist()
+                }
+                signal_calculator.calculate_signal_levels(symbol, market_data)
+    
+    return signal_calculator.get_best_signals()
+
+
+@api_router.get("/signals/all", response_model=dict)
+async def get_all_signals():
+    """Get all signal levels"""
+    return {"signals": signal_calculator.get_all_signals()}
+
+
+# News Aggregator Endpoints
+@api_router.get("/news/latest", response_model=dict)
+async def get_latest_news(limit: int = 20):
+    """Get latest aggregated news"""
+    await news_aggregator.update_news()
+    return {
+        "news": news_aggregator.get_latest_news(limit),
+        "sentiment_summary": news_aggregator.get_sentiment_summary()
+    }
+
+
+@api_router.get("/news/breaking", response_model=dict)
+async def get_breaking_news():
+    """Get breaking news only"""
+    return {"breaking_news": news_aggregator.get_breaking_news()}
+
+
+@api_router.get("/news/symbol/{symbol}", response_model=dict)
+async def get_news_for_symbol(symbol: str, limit: int = 10):
+    """Get news for specific symbol"""
+    return {
+        "symbol": symbol.upper(),
+        "news": news_aggregator.get_news_by_symbol(symbol.upper(), limit)
+    }
+
+
+@api_router.get("/news/category/{category}", response_model=dict)
+async def get_news_by_category(category: str, limit: int = 10):
+    """Get news by category (macro, earnings, sector, etc.)"""
+    return {
+        "category": category,
+        "news": news_aggregator.get_news_by_category(category, limit)
+    }
+
+
+# Execution Engine Endpoints
+@api_router.post("/execution/order", response_model=dict)
+async def execute_order(
+    symbol: str,
+    side: str,
+    quantity: int,
+    algorithm: str = "adaptive",
+    limit_price: float = None,
+    urgency: float = 0.5
+):
+    """Execute order using smart execution algorithms"""
+    algo_map = {
+        "market": ExecutionAlgorithm.MARKET,
+        "vwap": ExecutionAlgorithm.VWAP,
+        "twap": ExecutionAlgorithm.TWAP,
+        "iceberg": ExecutionAlgorithm.ICEBERG,
+        "adaptive": ExecutionAlgorithm.ADAPTIVE
+    }
+    
+    algo = algo_map.get(algorithm.lower(), ExecutionAlgorithm.ADAPTIVE)
+    
+    report = await execution_engine.execute_order(
+        symbol=symbol.upper(),
+        side=side.upper(),
+        quantity=quantity,
+        algorithm=algo,
+        limit_price=limit_price,
+        urgency=urgency
+    )
+    
+    return report.to_dict()
+
+
+@api_router.get("/execution/stats", response_model=dict)
+async def get_execution_stats():
+    """Get execution performance statistics"""
+    return execution_engine.get_execution_stats()
+
+
+# Learning Engine Endpoints
+@api_router.get("/learning/weights", response_model=dict)
+async def get_strategy_weights():
+    """Get current strategy weights from learning engine"""
+    return learning_engine.get_strategy_weights()
+
+
+@api_router.get("/learning/performance", response_model=dict)
+async def get_learning_performance():
+    """Get strategy performance summary"""
+    return learning_engine.get_performance_summary()
+
+
+@api_router.post("/learning/cycle", response_model=dict)
+async def run_learning_cycle(cycle_type: str = "daily"):
+    """Run a learning cycle to adjust strategy weights"""
+    cycle = await learning_engine.run_learning_cycle(cycle_type)
+    return cycle.to_dict()
+
+
+@api_router.get("/learning/history", response_model=dict)
+async def get_learning_history(limit: int = 10):
+    """Get learning cycle history"""
+    return {"cycles": learning_engine.get_learning_history(limit)}
+
+
+# Strategy Registry Endpoints
+@api_router.get("/strategies/registry", response_model=dict)
+async def get_strategy_registry():
+    """Get all registered strategies"""
+    return {
+        "strategies": list(STRATEGY_REGISTRY.keys()),
+        "total_count": len(STRATEGY_REGISTRY),
+        "categories": {
+            "trend": ["trend_following", "momentum", "breakout", "macd_crossover"],
+            "mean_reversion": ["mean_reversion", "rsi_divergence", "bollinger_squeeze", "vwap_reversion"],
+            "statistical": ["stat_arb", "pairs_trading"],
+            "intraday": ["orb", "gap_trading", "volume_profile"],
+            "macro": ["sector_rotation"]
+        }
+    }
+
+
+# Dashboard Data - Enhanced
+@api_router.get("/dashboard/full", response_model=dict)
+async def get_full_dashboard():
+    """Get complete dashboard data with all components"""
+    # Gather all data
+    dashboard_data = {}
+    
+    # Basic dashboard data
+    if state.connector and state.data_manager:
+        account = state.connector.get_account()
+        positions = state.connector.get_positions()
+        
+        dashboard_data["account"] = {
+            "equity": account.equity,
+            "cash": account.cash,
+            "buying_power": account.buying_power,
+            "daily_pnl": account.daily_pnl,
+            "unrealized_pnl": account.unrealized_pnl
+        }
+        
+        dashboard_data["positions"] = [
+            {
+                "symbol": p.symbol,
+                "quantity": p.quantity,
+                "avg_cost": p.avg_cost,
+                "current_price": p.current_price,
+                "unrealized_pnl": p.unrealized_pnl,
+                "pnl_pct": (p.current_price - p.avg_cost) / p.avg_cost * 100 if p.avg_cost > 0 else 0
+            }
+            for p in positions
+        ]
+    
+    # Regime and signals
+    if state.regime_detector:
+        regime_state = state.regime_detector.detect_regime({})
+        dashboard_data["regime"] = regime_state.to_dict()
+    
+    # Best signals
+    dashboard_data["best_signals"] = signal_calculator.get_best_signals()
+    
+    # News summary
+    await news_aggregator.update_news()
+    dashboard_data["news"] = {
+        "latest": news_aggregator.get_latest_news(5),
+        "sentiment": news_aggregator.get_sentiment_summary()
+    }
+    
+    # Strategy weights
+    dashboard_data["strategy_weights"] = learning_engine.get_strategy_weights()
+    
+    # Execution stats
+    dashboard_data["execution_stats"] = execution_engine.get_execution_stats()
+    
+    # System status
+    dashboard_data["system"] = {
+        "mode": CONFIG.mode.value,
+        "uptime_seconds": (datetime.now(timezone.utc) - state.start_time).total_seconds(),
+        "kill_switch": state.kill_switch_active,
+        "strategies_active": len(STRATEGY_REGISTRY),
+        "symbols_tracked": CONFIG.symbols.all_symbols
+    }
+    
+    return dashboard_data
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
