@@ -1984,10 +1984,6 @@ async def get_symbol_news(symbol: str):
     }
 
 
-# Include router
-app.include_router(api_router)
-
-
 # ===== NEW API ENDPOINTS =====
 
 # Signal Levels Endpoints
