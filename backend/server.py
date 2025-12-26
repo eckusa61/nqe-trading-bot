@@ -79,6 +79,12 @@ finviz_feed = FinvizFeed()
 forex_feed = ForexFeed()
 twitter_feed = TwitterFeed()
 
+# Initialize new modules
+execution_engine = ExecutionEngine()
+signal_calculator = SignalLevelsCalculator()
+news_aggregator = NewsAggregator()
+learning_engine = SelfLearningEngine()
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
