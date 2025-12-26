@@ -2153,23 +2153,42 @@ async def get_full_dashboard():
     # Gather all data
     dashboard_data = {}
     
-    # Basic dashboard data
-    if state.connector and state.data_manager:
-        account = await state.connector.get_account_summary()
-        positions = await state.connector.get_positions()
-        
-        dashboard_data["account"] = {
-            "equity": account.get("equity", 100000),
-            "cash": account.get("cash", 50000),
-            "buying_power": account.get("buying_power", 100000),
-            "daily_pnl": account.get("daily_pnl", 0),
-            "unrealized_pnl": account.get("unrealized_pnl", 0)
-        }
-        
-        dashboard_data["positions"] = [
-            {"symbol": symbol, "quantity": qty}
-            for symbol, qty in positions.items()
-        ]
+    # Basic dashboard data - with error handling
+    try:
+        if state.connector and state.data_manager:
+            try:
+                account = await state.connector.get_account_summary()
+                positions = await state.connector.get_positions()
+            except Exception as e:
+                logger.warning(f"Error getting account data: {e}")
+                account = {}
+                positions = {}
+            
+            dashboard_data["account"] = {
+                "equity": account.get("equity", 100000),
+                "cash": account.get("cash", 50000),
+                "buying_power": account.get("buying_power", 100000),
+                "daily_pnl": account.get("daily_pnl", 0),
+                "unrealized_pnl": account.get("unrealized_pnl", 0)
+            }
+            
+            dashboard_data["positions"] = [
+                {"symbol": symbol, "quantity": qty}
+                for symbol, qty in positions.items()
+            ]
+        else:
+            dashboard_data["account"] = {
+                "equity": 100000,
+                "cash": 50000,
+                "buying_power": 100000,
+                "daily_pnl": 0,
+                "unrealized_pnl": 0
+            }
+            dashboard_data["positions"] = []
+    except Exception as e:
+        logger.error(f"Dashboard account error: {e}")
+        dashboard_data["account"] = {"equity": 100000, "cash": 50000, "buying_power": 100000, "daily_pnl": 0, "unrealized_pnl": 0}
+        dashboard_data["positions"] = []
     
     # Regime and signals
     if state.regime_detector:
