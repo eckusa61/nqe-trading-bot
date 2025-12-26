@@ -4,7 +4,7 @@ Trading Strategies Module
 """
 
 # Base
-from .base_strategy import BaseStrategy, Signal, StrategyResult
+from .base_strategy import BaseStrategy, Signal, StrategyResult, strategy_registry
 
 # Original 5 Strategies
 from .mean_reversion import MeanReversionStrategy
