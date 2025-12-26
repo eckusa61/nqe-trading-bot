@@ -2173,8 +2173,11 @@ async def get_full_dashboard():
     
     # Regime and signals
     if state.regime_detector:
-        regime_state = state.regime_detector.detect_regime({})
-        dashboard_data["regime"] = regime_state.to_dict()
+        try:
+            regime_state = state.regime_detector.detect_from_features([])
+            dashboard_data["regime"] = regime_state.to_dict()
+        except Exception:
+            dashboard_data["regime"] = {"regime": "sideways", "confidence": 0.5}
     
     # Best signals
     dashboard_data["best_signals"] = signal_calculator.get_best_signals()
