@@ -581,7 +581,7 @@ class LiveIBKRConnector(BaseIBKRConnector):
             return [
                 HistoricalBar(
                     symbol=symbol,
-                    timestamp=bar.date,
+                    timestamp=bar.date if bar.date.tzinfo else bar.date.replace(tzinfo=timezone.utc),
                     open=bar.open,
                     high=bar.high,
                     low=bar.low,
