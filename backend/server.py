@@ -2010,13 +2010,13 @@ async def get_best_signals():
     # Calculate signals for all tracked symbols
     for symbol in CONFIG.symbols.all_symbols:
         if state.data_manager:
-            data = state.data_manager.get_data(symbol)
-            if data is not None and len(data) > 0:
+            bars = state.data_manager.get_historical_bars(symbol, limit=200)
+            if bars and len(bars) > 0:
                 market_data = {
-                    'close': data['close'].tolist(),
-                    'high': data['high'].tolist(),
-                    'low': data['low'].tolist(),
-                    'volume': data['volume'].tolist()
+                    'close': [b.close for b in bars],
+                    'high': [b.high for b in bars],
+                    'low': [b.low for b in bars],
+                    'volume': [b.volume for b in bars]
                 }
                 signal_calculator.calculate_signal_levels(symbol, market_data)
     
