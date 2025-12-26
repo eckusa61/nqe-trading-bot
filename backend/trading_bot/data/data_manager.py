@@ -291,9 +291,19 @@ class DataManager:
         
         # Check for missing dates (gaps > 4 days = business week)
         for i in range(1, len(bars)):
-            gap = (bars[i].timestamp - bars[i-1].timestamp).days
+            # Ensure both timestamps are timezone-aware
+            ts_current = bars[i].timestamp
+            ts_prev = bars[i-1].timestamp
+            
+            # Make timezone aware if needed
+            if ts_current.tzinfo is None:
+                ts_current = ts_current.replace(tzinfo=timezone.utc)
+            if ts_prev.tzinfo is None:
+                ts_prev = ts_prev.replace(tzinfo=timezone.utc)
+            
+            gap = (ts_current - ts_prev).days
             if gap > 4:  # Allow for weekends + 1 holiday
-                issues.append(f"Gap of {gap} days at {bars[i-1].timestamp.date()}")
+                issues.append(f"Gap of {gap} days at {ts_prev.date()}")
         
         # Check for outliers
         closes = [b.close for b in bars]
