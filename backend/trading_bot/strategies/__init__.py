@@ -11,7 +11,7 @@ from .mean_reversion import MeanReversionStrategy
 from .momentum import MomentumStrategy
 from .volatility_breakout import VolatilityBreakoutStrategy
 from .trend_following import TrendFollowingStrategy
-from .stat_arb import StatArbStrategy
+from .stat_arb import StatisticalArbitrageStrategy
 
 # New 10 Strategies
 from .pairs_trading import PairsTradingStrategy
