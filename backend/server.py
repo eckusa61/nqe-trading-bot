@@ -2134,7 +2134,7 @@ async def get_learning_history(limit: int = 10):
 
 
 # Strategy Registry Endpoints
-@api_router.get("/strategies/registry", response_model=dict)
+@api_router.get("/strategy-registry/all", response_model=dict)
 async def get_strategy_registry():
     """Get all registered strategies"""
     return {
