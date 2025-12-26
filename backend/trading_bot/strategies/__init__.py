@@ -57,7 +57,7 @@ STRATEGY_REGISTRY = {
     'momentum': MomentumStrategy,
     'volatility_breakout': VolatilityBreakoutStrategy,
     'trend_following': TrendFollowingStrategy,
-    'stat_arb': StatArbStrategy,
+    'stat_arb': StatisticalArbitrageStrategy,
     'pairs_trading': PairsTradingStrategy,
     'breakout': BreakoutStrategy,
     'rsi_divergence': RSIDivergenceStrategy,
