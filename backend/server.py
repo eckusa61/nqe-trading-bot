@@ -59,6 +59,11 @@ from trading_bot.ensemble import (
 from trading_bot.notifications import telegram_manager, TelegramManager
 from trading_bot.ai import ai_supervisor, AISupervisor
 from trading_bot.social import social_analyzer, SocialSentimentAnalyzer
+from trading_bot.execution import ExecutionEngine, ExecutionAlgorithm
+from trading_bot.signals import SignalLevelsCalculator, SignalStrength
+from trading_bot.news import NewsAggregator
+from trading_bot.learning import SelfLearningEngine
+from trading_bot.strategies import get_all_strategies, STRATEGY_REGISTRY
 from trading_bot.social.data_sources import (
     RedditFeed, StockTwitsFeed, YahooFinanceFeed,
     CryptoFeed, NewsFeed, FinvizFeed, ForexFeed, TwitterFeed
