@@ -578,10 +578,21 @@ class LiveIBKRConnector(BaseIBKRConnector):
                 useRTH=CONFIG.data.use_rth
             )
             
-            return [
-                HistoricalBar(
+            result = []
+            for bar in bars:
+                # Handle both datetime.date and datetime.datetime objects
+                bar_date = bar.date
+                if isinstance(bar_date, date) and not isinstance(bar_date, datetime):
+                    # Convert date to datetime
+                    ts = datetime.combine(bar_date, datetime.min.time(), tzinfo=timezone.utc)
+                elif hasattr(bar_date, 'tzinfo') and bar_date.tzinfo is None:
+                    ts = bar_date.replace(tzinfo=timezone.utc)
+                else:
+                    ts = bar_date if hasattr(bar_date, 'tzinfo') else datetime.combine(bar_date, datetime.min.time(), tzinfo=timezone.utc)
+                
+                result.append(HistoricalBar(
                     symbol=symbol,
-                    timestamp=bar.date if bar.date.tzinfo else bar.date.replace(tzinfo=timezone.utc),
+                    timestamp=ts,
                     open=bar.open,
                     high=bar.high,
                     low=bar.low,
@@ -589,9 +600,9 @@ class LiveIBKRConnector(BaseIBKRConnector):
                     volume=bar.volume,
                     bar_count=bar.barCount,
                     wap=bar.average
-                )
-                for bar in bars
-            ]
+                ))
+            
+            return result
         except Exception as e:
             logger.error(f"Error getting historical data for {symbol}: {e}")
             return []
