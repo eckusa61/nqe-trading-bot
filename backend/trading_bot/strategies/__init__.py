@@ -36,7 +36,7 @@ __all__ = [
     'MomentumStrategy',
     'VolatilityBreakoutStrategy',
     'TrendFollowingStrategy',
-    'StatArbStrategy',
+    'StatisticalArbitrageStrategy',
     
     # New Strategies
     'PairsTradingStrategy',
