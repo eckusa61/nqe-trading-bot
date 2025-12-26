@@ -30,6 +30,7 @@ __all__ = [
     'BaseStrategy',
     'Signal',
     'StrategyResult',
+    'strategy_registry',
     
     # Original Strategies
     'MeanReversionStrategy',
