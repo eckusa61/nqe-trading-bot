@@ -540,8 +540,16 @@ export default function Dashboard() {
       {/* Footer */}
       <footer className="border-t border-gray-800 px-4 py-4 mt-8">
         <div className="container mx-auto flex items-center justify-between text-xs text-gray-500">
-          <span>NQE Trading Bot v2.0 | 15 Strateji | {system.mode?.toUpperCase()}</span>
-          <span>Son güncelleme: {new Date().toLocaleTimeString('tr-TR')}</span>
+          <span className="flex items-center gap-2">
+            <span className="text-blue-400 font-bold">ECK</span>
+            <span>|</span>
+            <span>NQE Trading Bot v2.0 | 15 Strateji | {system.mode?.toUpperCase()}</span>
+          </span>
+          <span className="flex items-center gap-4">
+            <span className="text-yellow-400">Development by ECK</span>
+            <span>|</span>
+            <span>Son güncelleme: {new Date().toLocaleTimeString('tr-TR')}</span>
+          </span>
         </div>
       </footer>
     </div>
