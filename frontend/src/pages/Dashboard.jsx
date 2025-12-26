@@ -18,7 +18,8 @@ import {
 } from '../components/trading';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+// Backend URL - localhost için sabit
+const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 // Signal Strength Badge Component
 const SignalBadge = ({ strength }) => {
