@@ -84,22 +84,29 @@ export default function Dashboard() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [dashboardRes, signalRes] = await Promise.all([
-        axios.get(`${API_URL}/api/dashboard/full`),
-        axios.get(`${API_URL}/api/signals/levels/${selectedSymbol}`)
-      ]);
-      
+      // Dashboard verisi
+      const dashboardRes = await axios.get(`${API_URL}/api/dashboard/full`);
       setFullDashboard(dashboardRes.data);
-      setSignalLevels(signalRes.data);
       setError(null);
+      
+      // Signal verisi - hata olsa bile dashboard çalışsın
+      try {
+        const signalRes = await axios.get(`${API_URL}/api/signals/levels/${selectedSymbol}`);
+        setSignalLevels(signalRes.data);
+      } catch (signalErr) {
+        console.warn('Signal data error:', signalErr);
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError('Sisteme bağlanılamadı');
+      // Sadece dashboard tamamen başarısız olursa hata göster
+      if (!fullDashboard) {
+        setError('Sisteme bağlanılamadı');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedSymbol]);
+  }, [selectedSymbol, fullDashboard]);
 
   useEffect(() => {
     fetchData();
