@@ -2214,6 +2214,9 @@ async def get_full_dashboard():
     
     return dashboard_data
 
+# Include router - MUST be after all endpoint definitions
+app.include_router(api_router)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
